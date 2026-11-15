@@ -1,77 +1,61 @@
-const RINGS = Array.from({ length: 30 }, (_, i) => i);
-
 /**
- * Fixed chrome spiral behind the whole page (decorative, pure SVG).
- * Delicate, luminous liquid-chrome ribbons with vibrant atmospheric violet & fuchsia glows.
- * Tuned with high vibrancy and luminous nebulae so the entire page is bright and radiant.
+ * Dynamic Living Chromatic Nebula & Chrome Waves.
+ * A rich, shifting blend of cosmic violet, emerald teal, warm gold, and celestial cyan
+ * that smoothly evolves and breathes behind the scene, encased in deep black atmospheric shading.
  */
 export function ChromeWaves() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      {/* Radiant atmospheric violet and fuchsia nebula drifts */}
-      <div className="glow-drift absolute -right-[10vmax] -top-[15vmax] size-[85vmax] rounded-full bg-[radial-gradient(closest-side,rgb(168_85_247/0.42),rgb(124_58_237/0.22),transparent)]" />
+    <div
+      aria-hidden
+      data-glass-backdrop="true"
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden [contain:strict] transform-gpu"
+    >
+      {/* 1. Top Right: Celestial Violet → Indigo → Cyan drift */}
+      <div className="aurora-drift-1 pointer-events-none absolute -right-[12vmax] -top-[16vmax] size-[88vmax] rounded-full bg-[radial-gradient(closest-side,rgb(168_85_247/0.38),rgb(99_102_241/0.22),rgb(6_182_212/0.16),transparent)]" />
+
+      {/* 2. Left Stage: Blooming Tree Life Aura — Emerald Teal → Jade → Golden Amber */}
       <div
-        className="glow-drift absolute -bottom-[20vmax] -left-[10vmax] size-[90vmax] rounded-full bg-[radial-gradient(closest-side,rgb(217_70_239/0.38),rgb(147_51_234/0.25),transparent)]"
-        style={{ animationDelay: "-12s", animationDuration: "34s" }}
+        className="aurora-drift-2 pointer-events-none absolute -left-[14vmax] top-[8vmax] size-[84vmax] rounded-full bg-[radial-gradient(closest-side,rgb(20_184_166/0.32),rgb(16_185_129/0.2),rgb(245_158_11/0.16),transparent)]"
+        style={{ animationDelay: "-8s" }}
       />
-      {/* Central ambient glow behind the sphere & tree */}
-      <div className="absolute left-1/3 top-1/2 size-[90vmax] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(192_132_252/0.32),rgb(147_51_234/0.18),rgb(99_102_241/0.1),transparent_70%)]" />
 
-      {/* Right side ambient luminescence for hero typography */}
-      <div className="absolute right-[10%] top-[40%] size-[60vmax] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(168_85_247/0.28),rgb(217_70_239/0.15),transparent_70%)]" />
+      {/* 3. Bottom Ambrosia Drift: Warm Kalpavriksha Gold → Rose Fuchsia → Amethyst */}
+      <div
+        className="aurora-drift-3 pointer-events-none absolute -bottom-[22vmax] left-[15%] size-[92vmax] rounded-full bg-[radial-gradient(closest-side,rgb(245_158_11/0.26),rgb(236_72_153/0.22),rgb(147_51_234/0.18),transparent)]"
+        style={{ animationDelay: "-14s" }}
+      />
 
-      <div className="waves-scroll will-change-transform absolute left-1/2 top-1/2 size-[170vmax] -translate-x-1/2 -translate-y-1/2">
-        <div className="spin-slow will-change-transform size-full" style={{ animationDuration: "160s" }}>
-          <svg viewBox="-1100 -1100 2200 2200" className="size-full">
-            <defs>
-              <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#fff" stopOpacity="0" />
-                <stop offset="0.3" stopColor="#fff" stopOpacity="0.85" />
-                <stop offset="0.48" stopColor="#d8b4fe" stopOpacity="0.45" />
-                <stop offset="0.66" stopColor="#fff" stopOpacity="0.75" />
-                <stop offset="1" stopColor="#fff" stopOpacity="0" />
-              </linearGradient>
-              <linearGradient id="chrome-glow" x1="1" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#e879f9" stopOpacity="0" />
-                <stop offset="0.4" stopColor="#c084fc" stopOpacity="0.85" />
-                <stop offset="0.7" stopColor="#a855f7" stopOpacity="0.65" />
-                <stop offset="1" stopColor="#7c3aed" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <g transform="rotate(-22)">
-              {/* Radiant violet-fuchsia atmospheric halo behind the brightest ribbons (pure SVG strokes, 0 raster filter lag) */}
-              <g opacity="0.6">
-                {RINGS.filter((i) => i % 4 === 0).map((i) => (
-                  <ellipse
-                    key={i}
-                    rx={200 + i * 30}
-                    ry={92 + i * 17}
-                    fill="none"
-                    stroke="url(#chrome-glow)"
-                    strokeWidth="8"
-                    strokeOpacity="0.4"
-                  />
-                ))}
-              </g>
-              {RINGS.map((i) => (
-                <ellipse
-                  key={i}
-                  rx={200 + i * 30}
-                  ry={92 + i * 17}
-                  fill="none"
-                  stroke="url(#chrome)"
-                  strokeWidth={i % 5 === 0 ? 5.5 : i % 2 === 0 ? 2 : 1}
-                  strokeOpacity={0.45 + (i % 4) * 0.12}
-                />
-              ))}
-            </g>
-          </svg>
-        </div>
-      </div>
+      {/* 4. Central Sacred Luminescence: Ethereal Lavender & Indigo behind Sphere */}
+      <div
+        className="aurora-drift-1 pointer-events-none absolute left-1/3 top-1/2 size-[80vmax] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(192_132_252/0.26),rgb(147_51_234/0.16),rgb(56_189_248/0.1),transparent_72%)]"
+        style={{ animationDelay: "-18s", animationDuration: "36s" }}
+      />
 
-      {/* Subtle edge vignette (soft, non-darkening, ensures foreground contrast without making the scene dim) */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgb(8_4_16/0.4)_92%)]" />
-      <div className="grain absolute inset-0 opacity-10" />
+      {/* 5. Right Rail Luminescence: Warm Sunset Fuchsia & Peach for Typography */}
+      <div
+        className="aurora-drift-2 pointer-events-none absolute right-[8%] top-[38%] size-[58vmax] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(244_114_182/0.22),rgb(168_85_247/0.16),rgb(245_158_11/0.12),transparent_70%)]"
+        style={{ animationDelay: "-6s" }}
+      />
+
+      {/* 6. Deep Black Shading Layers for High Contrast & Obsidian Space Depth (Dark Mode) */}
+      {/* A. Deep black radial vignette from center outwards */}
+      <div className="chrome-black-shade pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(3,1,8,0.45)_58%,rgba(0,0,0,0.85)_95%)]" />
+
+      {/* B. Vertical black shading veil from top and bottom */}
+      <div className="chrome-black-shade pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+
+      {/* C. Bottom floor deep black shadow fade */}
+      <div className="chrome-black-shade pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+      {/* 7. Pearlescent Ambient Veil (Light Mode) — luminous lavender, not flat white */}
+      <div className="chrome-light-shade pointer-events-none absolute inset-0 bg-[#f7f1fd]/45" />
+      <div className="chrome-light-shade pointer-events-none absolute inset-0 bg-gradient-to-b from-white/45 via-transparent to-[#f2eafb]/55" />
+      <div className="chrome-light-shade pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f6f0fc]/80 via-[#f6f0fc]/40 to-transparent" />
+
+      {/* 8. Light Depth Shading across Landing Page (Light Mode: violet depth, no grey mud) */}
+      <div className="chrome-light-shade pointer-events-none absolute inset-0 bg-[#7c3aed]/[0.045]" />
+      <div className="chrome-light-shade pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_34%,rgba(124,58,237,0.07)_72%,rgba(76,29,149,0.15)_100%)]" />
+      <div className="chrome-light-shade pointer-events-none absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-[#7c3aed]/[0.05]" />
     </div>
   );
 }

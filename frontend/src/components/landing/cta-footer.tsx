@@ -7,14 +7,27 @@ import { useLocale } from "@/components/locale-provider";
 import { ScrollWaveField } from "@/components/scroll-wave-field";
 import { SplitText } from "@/components/split-text";
 import { WarpText } from "@/components/warp-text";
+import { useTheme } from "@/lib/theme";
 import { StandingPenguin } from "./standing-penguin";
 
-export function CtaFooter() {
+interface CtaFooterProps {
+  scrollProgress?: number;
+}
+
+export function CtaFooter({ scrollProgress = 0 }: CtaFooterProps) {
   const { t } = useLocale();
+  const { isDark } = useTheme();
   const firstModule = "/m/learn";
 
   return (
-    <footer className="relative mt-8 overflow-hidden border-t border-line sm:mt-10 lg:mt-14">
+    <footer 
+      className="relative mt-8 overflow-hidden border-t border-line sm:mt-10 lg:mt-14"
+      style={{
+        opacity: Math.min(scrollProgress * 2, 1),
+        transform: `translateY(${Math.max(0, 20 - scrollProgress * 40)}px)`,
+        transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+      }}
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-[radial-gradient(60%_80%_at_20%_100%,rgb(124_58_237/0.22),transparent_70%)]"
@@ -38,7 +51,11 @@ export function CtaFooter() {
         <Link
           href={firstModule}
           data-reveal="up"
-          className="beam-border group inline-flex h-14 shrink-0 items-center gap-3 self-start rounded-full bg-violet-deep px-7 font-mono text-sm text-violet-ink transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 lg:self-auto"
+          className={`beam-border group inline-flex h-14 shrink-0 items-center gap-3 self-start rounded-full px-7 font-mono text-sm transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 lg:self-auto ${
+            isDark
+              ? "bg-violet-deep text-violet-ink"
+              : "bg-violet-700 text-white shadow-[0_8px_24px_-6px_rgba(109,40,217,0.5)] hover:bg-violet-800"
+          }`}
         >
           {t.cta}
           <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
@@ -74,9 +91,9 @@ export function CtaFooter() {
             letterSpacing="-0.06em"
             lineHeight={0.9}
             outline={true}
-            strokeColor="rgba(255, 255, 255, 0.55)"
+            strokeColor={isDark ? "rgba(255, 255, 255, 0.55)" : "rgba(76, 29, 149, 0.45)"}
             strokeWidth={2.2}
-            color="rgba(255, 255, 255, 0.55)"
+            color={isDark ? "rgba(255, 255, 255, 0.55)" : "rgba(76, 29, 149, 0.45)"}
             warpStrength={0.08}
             warpScale={1.7}
             speed={0.55}

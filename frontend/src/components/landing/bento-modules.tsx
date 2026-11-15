@@ -1,15 +1,20 @@
 "use client";
 
-import { ArrowUpRight, Flag, Play, Plus, Sparkle } from "@phosphor-icons/react/ssr";
+import { ArrowUpRight, Flag, Play, Sparkle } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/components/locale-provider";
 import { NeonBorder } from "@/components/neon-border";
 import { RevealWords } from "@/components/scroll-fx";
-import { accentOf } from "@/modules/accents";
 import { MODULES } from "@/modules/registry";
+import { LiquidGlassSurface } from "@/components/liquid-glass-surface";
+import { accentOf } from "@/modules/accents";
 
-export function BentoModules() {
+interface BentoModulesProps {
+  scrollProgress?: number;
+}
+
+export function BentoModules({ scrollProgress = 0 }: BentoModulesProps) {
   const { t, locale } = useLocale();
 
   const m1 = MODULES[0]!; // Digital Learning (01)
@@ -22,8 +27,14 @@ export function BentoModules() {
 
   return (
     <section id="modules" className="relative mx-auto w-full max-w-[1360px] scroll-mt-12 px-4 py-20 sm:px-6 lg:px-8 lg:py-32">
-      {/* Section Header */}
-      <div className="mb-14 grid items-end gap-6 lg:mb-20 lg:grid-cols-[1.1fr_0.9fr]">
+      {/* Section Header - fades in with scroll */}
+      <div 
+        className="mb-14 grid items-end gap-6 lg:mb-20 lg:grid-cols-[1.1fr_0.9fr]"
+        style={{
+          opacity: Math.min(scrollProgress * 2, 1),
+          transform: `translateY(${Math.max(0, 30 - scrollProgress * 60)}px)`,
+        }}
+      >
         <RevealWords
           text={t.modulesTitle}
           className="font-display text-[clamp(36px,5vw,72px)] leading-[0.98] tracking-[-0.04em] text-balance text-text"
@@ -41,9 +52,14 @@ export function BentoModules() {
         <div
           data-reveal="up"
           className="relative w-full overflow-visible rounded-3xl transition-transform duration-300 hover:-translate-y-1"
+          style={{
+            opacity: Math.min(Math.max(0, scrollProgress * 1.5 - 0.2), 1),
+            transform: `translateY(${Math.max(0, 40 - scrollProgress * 80)}px)`,
+            transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+          }}
         >
           {/* Animated Neon Border */}
-          <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
+          <div className="neon-border-frame pointer-events-none absolute inset-0 z-20 overflow-visible">
             <NeonBorder
               color={a1.hex}
               rounded={24}
@@ -55,10 +71,14 @@ export function BentoModules() {
             />
           </div>
 
-          <Link
-            href={`/m/${m1.slug}`}
-            className={`group relative z-10 grid grid-cols-1 items-center gap-6 rounded-3xl border border-white/15 bg-[#120a24]/92 px-6 py-8 shadow-[0_16px_50px_-5px_rgba(0,0,0,0.85),0_0_30px_rgba(147,51,234,0.18)] backdrop-blur-2xl transition-all duration-300 hover:bg-[#1a0e33] ${a1.cardHover} sm:px-8 sm:py-10 md:grid-cols-[120px_1fr_1.2fr] lg:grid-cols-[160px_1.05fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12`}
+          <LiquidGlassSurface
+            radius={24}
+            className="group z-10 border border-white/10 shadow-[0_24px_70px_-34px_rgb(0_0_0/0.9)]"
           >
+            <Link
+              href={`/m/${m1.slug}`}
+              className={`group relative z-10 grid grid-cols-1 items-center gap-6 rounded-3xl px-6 py-8 transition-all duration-300 ${a1.cardHover} sm:px-8 sm:py-10 md:grid-cols-[120px_1fr_1.2fr] lg:grid-cols-[160px_1.05fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12`}
+            >
             {/* Left: Big Number 01 */}
             <div className="flex items-center justify-between md:justify-start">
               <span className="font-display text-[clamp(60px,7.5vw,118px)] font-light leading-none tracking-tight text-white/50 transition-colors duration-300 group-hover:text-white">
@@ -108,6 +128,7 @@ export function BentoModules() {
               </div>
             </div>
           </Link>
+          </LiquidGlassSurface>
         </div>
 
         {/* ========================================================================= */}
@@ -116,9 +137,14 @@ export function BentoModules() {
         <div
           data-reveal="up"
           className="relative w-full overflow-visible rounded-3xl transition-transform duration-300 hover:-translate-y-1"
+          style={{
+            opacity: Math.min(Math.max(0, scrollProgress * 1.5 - 0.3), 1),
+            transform: `translateY(${Math.max(0, 50 - scrollProgress * 100)}px)`,
+            transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+          }}
         >
           {/* Animated Neon Border */}
-          <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
+          <div className="neon-border-frame pointer-events-none absolute inset-0 z-20 overflow-visible">
             <NeonBorder
               color={a2.hex}
               rounded={24}
@@ -130,10 +156,14 @@ export function BentoModules() {
             />
           </div>
 
-          <Link
-            href={`/m/${m2.slug}`}
-            className={`group relative z-10 grid grid-cols-1 items-center gap-6 rounded-3xl border border-white/15 bg-[#120a24]/92 px-6 py-8 shadow-[0_16px_50px_-5px_rgba(0,0,0,0.85),0_0_30px_rgba(147,51,234,0.18)] backdrop-blur-2xl transition-all duration-300 hover:bg-[#1a0e33] ${a2.cardHover} sm:px-8 sm:py-10 md:grid-cols-[1.2fr_1.05fr_120px] lg:grid-cols-[1.2fr_1.05fr_160px] lg:gap-10 lg:px-12 lg:py-12`}
+          <LiquidGlassSurface
+            radius={24}
+            className="group z-10 border border-white/10 shadow-[0_24px_70px_-34px_rgb(0_0_0/0.9)]"
           >
+            <Link
+              href={`/m/${m2.slug}`}
+              className={`group relative z-10 grid grid-cols-1 items-center gap-6 rounded-3xl px-6 py-8 transition-all duration-300 ${a2.cardHover} sm:px-8 sm:py-10 md:grid-cols-[1.2fr_1.05fr_120px] lg:grid-cols-[1.2fr_1.05fr_160px] lg:gap-10 lg:px-12 lg:py-12`}
+            >
             {/* Mobile Header: Number 02 shows at top on small screens */}
             <div className="flex items-center justify-between md:hidden">
               <span className="font-display text-[clamp(60px,7.5vw,118px)] font-light leading-none tracking-tight text-white/50 transition-colors duration-300 group-hover:text-white">
@@ -222,6 +252,7 @@ export function BentoModules() {
               </span>
             </div>
           </Link>
+          </LiquidGlassSurface>
         </div>
 
         {/* ========================================================================= */}
@@ -230,9 +261,14 @@ export function BentoModules() {
         <div
           data-reveal="up"
           className="relative w-full overflow-visible rounded-3xl transition-transform duration-300 hover:-translate-y-1"
+          style={{
+            opacity: Math.min(Math.max(0, scrollProgress * 1.5 - 0.4), 1),
+            transform: `translateY(${Math.max(0, 60 - scrollProgress * 120)}px)`,
+            transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+          }}
         >
           {/* Animated Neon Border */}
-          <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
+          <div className="neon-border-frame pointer-events-none absolute inset-0 z-20 overflow-visible">
             <NeonBorder
               color={a3.hex}
               rounded={24}
@@ -244,10 +280,14 @@ export function BentoModules() {
             />
           </div>
 
-          <Link
-            href={`/m/${m3.slug}`}
-            className={`group relative z-10 grid grid-cols-1 items-center gap-6 rounded-3xl border border-white/15 bg-[#120a24]/92 px-6 py-8 shadow-[0_16px_50px_-5px_rgba(0,0,0,0.85),0_0_30px_rgba(147,51,234,0.18)] backdrop-blur-2xl transition-all duration-300 hover:bg-[#1a0e33] ${a3.cardHover} sm:px-8 sm:py-10 md:grid-cols-[120px_1fr_1.2fr] lg:grid-cols-[160px_1.05fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12`}
+          <LiquidGlassSurface
+            radius={24}
+            className="group z-10 border border-white/10 shadow-[0_24px_70px_-34px_rgb(0_0_0/0.9)]"
           >
+            <Link
+              href={`/m/${m3.slug}`}
+              className={`group relative z-10 grid grid-cols-1 items-center gap-6 rounded-3xl px-6 py-8 transition-all duration-300 ${a3.cardHover} sm:px-8 sm:py-10 md:grid-cols-[120px_1fr_1.2fr] lg:grid-cols-[160px_1.05fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12`}
+            >
             {/* Left: Big Number 03 */}
             <div className="flex items-center justify-between md:justify-start">
               <span className="font-display text-[clamp(60px,7.5vw,118px)] font-light leading-none tracking-tight text-white/50 transition-colors duration-300 group-hover:text-white">
@@ -297,23 +337,10 @@ export function BentoModules() {
               </div>
             </div>
           </Link>
+          </LiquidGlassSurface>
         </div>
       </div>
 
-      {/* Subtle Future Extension Banner */}
-      <div data-reveal="up" className="mt-10 flex items-center justify-between rounded-2xl border border-dashed border-white/15 bg-[#120a24]/60 px-6 py-4 backdrop-blur-xl sm:px-8">
-        <div className="flex items-center gap-3">
-          <span className="grid size-7 place-items-center rounded-lg border border-white/15 bg-white/[0.04] text-muted">
-            <Plus size={14} />
-          </span>
-          <p className="text-[14px] text-muted">
-            <strong className="font-medium text-text">{t.soonTitle}</strong> — {t.soonBody}
-          </p>
-        </div>
-        <span className="hidden font-mono text-[11px] text-muted/60 sm:inline">
-          Module 04+ In Pipeline
-        </span>
-      </div>
-    </section>
+      </section>
   );
 }

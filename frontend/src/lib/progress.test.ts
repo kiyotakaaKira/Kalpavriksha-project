@@ -10,6 +10,8 @@ import {
   completeLesson,
   levelOf,
   logActivity,
+  makeStudentId,
+  parseProfile,
   parseProgress,
   recordQuiz,
   removeActivity,
@@ -31,6 +33,19 @@ describe("levelOf", () => {
   it("starts at level 1 and levels up every 100 XP", () => {
     expect(levelOf(0)).toEqual({ level: 1, into: 0, span: 100 });
     expect(levelOf(250)).toEqual({ level: 3, into: 50, span: 100 });
+  });
+});
+
+describe("makeStudentId", () => {
+  it("encodes board, class and joining year instead of random digits", () => {
+    const date = new Date("2026-10-21T12:00:00");
+    expect(makeStudentId("tn_state", 6, date)).toBe("KV-TN-6-2026");
+    expect(makeStudentId("cbse", 11, date)).toBe("KV-CBSE-11-2026");
+    expect(makeStudentId("icse", 4, date)).toBe("KV-ICSE-4-2026");
+  });
+
+  it("falls back to a board-neutral prefix for an unknown board", () => {
+    expect(makeStudentId(undefined, 9, new Date("2026-01-02T12:00:00"))).toBe("KV-GEN-9-2026");
   });
 });
 
@@ -138,5 +153,46 @@ describe("parseProgress", () => {
     });
     expect(parsed.xp).toBe(40);
     expect(parsed.activities.map((a) => a.id)).toEqual(["ok"]);
+  });
+});
+
+describe("parseProfile", () => {
+  it("parses valid student academic profile with board and senior stream", () => {
+    const profile = parseProfile({
+      name: "Dhanush",
+      grade: 12,
+      avatar: "cat",
+      studentId: "GSX-2026-1201",
+      board: "tn_state",
+      seniorGroup: "biology",
+    });
+
+    expect(profile).toBeDefined();
+    expect(profile?.name).toBe("Dhanush");
+    expect(profile?.grade).toBe(12);
+    expect(profile?.board).toBe("tn_state");
+    expect(profile?.seniorGroup).toBe("biology");
+  });
+
+  it("parses student profile for class 6 with no senior stream", () => {
+    const profile = parseProfile({
+      name: "Ananya",
+      grade: 6,
+      avatar: "bird",
+      studentId: "GSX-2026-0601",
+      board: "cbse",
+    });
+
+    expect(profile).toBeDefined();
+    expect(profile?.name).toBe("Ananya");
+    expect(profile?.grade).toBe(6);
+    expect(profile?.board).toBe("cbse");
+    expect(profile?.seniorGroup).toBeUndefined();
+  });
+
+  it("returns null for invalid profile inputs", () => {
+    expect(parseProfile(null)).toBeNull();
+    expect(parseProfile("")).toBeNull();
+    expect(parseProfile({ grade: 12 })).toBeNull();
   });
 });

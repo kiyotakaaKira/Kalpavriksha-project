@@ -31,6 +31,17 @@ export function bandOf(grade: number): Band {
   return "senior";
 }
 
+const BOARD_CODE: Record<string, string> = { tn_state: "TN", cbse: "CBSE", icse: "ICSE" };
+
+/**
+ * Readable student code: board, class and the year the profile was created
+ * (for example `KV-TN-6-2026`). No random digits — every part means something.
+ */
+export function makeStudentId(board: string | undefined, grade: number, date = new Date()): string {
+  const boardCode = BOARD_CODE[board ?? ""] ?? "GEN";
+  return `KV-${boardCode}-${Math.round(grade)}-${date.getFullYear()}`;
+}
+
 export type Activity = { readonly id: string; readonly area: Area; readonly title: string; readonly date: string };
 
 export type LastAccessed = {
@@ -48,6 +59,7 @@ export type Profile = {
   readonly email?: string;
   readonly preferredLanguage?: Locale;
   readonly seniorGroup?: string;
+  readonly board?: string;
   readonly lastAccessed?: LastAccessed;
 };
 
@@ -216,7 +228,7 @@ function parseActivity(v: unknown): Activity | null {
   return { id: v.id, area: v.area as Area, title: v.title.slice(0, 80), date: v.date };
 }
 
-function parseProfile(v: unknown): Profile | null {
+export function parseProfile(v: unknown): Profile | null {
   if (!isObj(v) || !isStr(v.name) || !isStr(v.studentId)) return null;
   if (!(AVATARS as readonly unknown[]).includes(v.avatar)) return null;
   const grade = Math.round(num(v.grade, 6));
@@ -227,6 +239,7 @@ function parseProfile(v: unknown): Profile | null {
     ? (v.preferredLanguage as Locale)
     : undefined;
   const seniorGroup = isStr(v.seniorGroup) ? v.seniorGroup.slice(0, 32) : undefined;
+  const board = isStr(v.board) ? v.board.slice(0, 50) : undefined;
 
   let lastAccessed: LastAccessed | undefined;
   if (isObj(v.lastAccessed) && isStr(v.lastAccessed.subjectId) && isStr(v.lastAccessed.chapterId)) {
@@ -246,6 +259,7 @@ function parseProfile(v: unknown): Profile | null {
     email,
     preferredLanguage,
     seniorGroup,
+    board,
     lastAccessed,
   };
 }

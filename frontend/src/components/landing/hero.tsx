@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
-import { DepthText } from "@/components/depth-text";
+
 import { useLocale } from "@/components/locale-provider";
 import { ParticleCanvas } from "@/components/particle-canvas";
 import { FlipCard } from "@/components/flip-card";
@@ -14,8 +14,11 @@ import { SphereGallery3D } from "@/components/sphere-gallery-3d";
 import type { ShapeName } from "@/lib/shapes";
 import { MODULES } from "@/modules/registry";
 import { accentOf } from "@/modules/accents";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/lib/theme";
 import { LangSelect } from "./lang-select";
 import { MenuSheet } from "./menu-sheet";
+import { LiquidGlassSurface } from "@/components/liquid-glass-surface";
 
 const CYCLE_MS = 5200;
 const INTRO_MS = 1100;
@@ -33,13 +36,19 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function Hero() {
+interface HeroProps {
+  scrollProgress?: number;
+}
+
+export function Hero({ scrollProgress = 0 }: HeroProps) {
   const { t, locale } = useLocale();
+  const { isDark } = useTheme();
   const [introDone, setIntroDone] = useState(false);
   const [slot, setSlot] = useState<Slot>(-1);
   const [hovering, setHovering] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
   useEffect(() => {
     const id = window.setTimeout(() => setIntroDone(true), prefersReducedMotion() ? 0 : INTRO_MS);
@@ -65,11 +74,38 @@ export function Hero() {
   const shape: ShapeName = !introDone ? "ring" : slot < 0 ? "tree" : (MODULES[slot]?.shape ?? "tree");
   const [line1, line2] = t.headline;
 
+  // Keep hero content perfectly crisp: no opacity/scale fade on the frame.
+  // Sub-pixel scaling was making body text look soft, and the hero starts at
+  // scrollProgress=1 (centered) which dimmed it to 70% opacity on load.
+
+  // Mouse parallax for depth
+  const handleMouseMove = (e: React.MouseEvent) => {
+    setMousePos({
+      x: (e.clientX / window.innerWidth) * 100,
+      y: (e.clientY / window.innerHeight) * 100,
+    });
+  };
+
   return (
     <section
       data-hero
+      onMouseMove={handleMouseMove}
       className="relative isolate flex min-h-[100dvh] h-[100dvh] w-full items-center justify-center overflow-hidden p-0"
     >
+      {/* Scroll-driven ambient shift */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          transform: `translate3d(0, ${scrollProgress * -50}px, ${scrollProgress * -100}px) scale(${1 + scrollProgress * 0.1})`,
+          opacity: 1 - scrollProgress * 0.2,
+          transition: "none",
+          background: `
+            radial-gradient(ellipse at ${mousePos.x}% ${mousePos.y}%, rgba(168,85,247,${0.08 * (1 - scrollProgress)}) 0%, transparent 50%),
+            radial-gradient(ellipse at ${100 - mousePos.x}% ${100 - mousePos.y}%, rgba(45,212,191,${0.05 * (1 - scrollProgress)}) 0%, transparent 50%)
+          `,
+        }}
+      />
       <div className="hero-frame fade-up relative h-full w-full">
         <FlipCard
           flipped={isFlipped}
@@ -85,37 +121,58 @@ export function Hero() {
             /* DEFAULT FRONTPAGE: Luminous 3D Sphere Gallery View */
             <div className="relative flex h-full w-full flex-col overflow-hidden bg-transparent lg:block">
 
-              {/* Top bar — flows on mobile, pinned on desktop */}
-              <div className="z-20 flex items-center justify-between gap-3 px-5 py-4 sm:p-6 lg:absolute lg:right-8 xl:right-12 lg:top-8 lg:p-0">
+              {/* Top bar — flows on mobile, pinned on desktop (no-flip zone: stops propagation to FlipCard) */}
+              <div
+                className="z-30 flex items-center justify-between gap-3 px-5 py-4 sm:p-6 lg:absolute lg:right-8 xl:right-12 lg:top-8 lg:p-0"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <span className="flex items-center gap-2 font-headline font-semibold text-lg tracking-tight lg:hidden">
                   <BrandMark className="size-6 text-amber-400" strokeWidth={1.8} />
-                  Kalpavriksha
+                  <SparkleButton
+                    as="span"
+                    text={t.appName ?? "Kalpavriksha"}
+                    fontSize={locale === "ta" ? "clamp(20px, 2.8vw, 28px)" : "clamp(22px, 3vw, 30px)"}
+                    fontWeight={700}
+                    lineHeight={1.1}
+                    letterSpacing="-0.02em"
+                    textColor={isDark ? "#F4EEFF" : "#1a0833"}
+                    shadowColor={isDark ? "#1E0028" : "rgba(124, 58, 237, 0.25)"}
+                    glareColor={isDark ? "#4A105DBF" : "rgba(124, 58, 237, 0.55)"}
+                    className="select-none"
+                  />
                 </span>
                 <div className="flex items-center gap-2">
-                  <LangSelect />
+                  <LangSelect data-no-flip />
+                  <ThemeToggle data-no-flip />
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsFlipped(true);
                     }}
-                    className="flex h-11 items-center gap-2 rounded-xl border border-line bg-white/[0.06] px-3.5 font-mono text-[14px] text-text transition-colors duration-200 hover:border-violet/40 hover:bg-violet-deep hover:text-violet-ink active:scale-[0.98]"
+                    className="flex min-w-[44px] h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white/[0.06] px-4 font-mono text-[14px] text-text transition-colors duration-200 hover:border-violet/40 hover:bg-violet-deep hover:text-violet-ink active:scale-[0.98]"
                     title="Explore Particle Tree View"
+                    data-no-flip
                   >
                     <ArrowsClockwise size={15} />
                     <span className="hidden sm:inline">Tree View</span>
                   </button>
                   <Link
                     href="/sign-in"
-                    className="hidden h-11 items-center rounded-xl border border-violet/25 bg-violet-deep px-5 font-mono text-[14px] text-violet-ink transition-colors duration-200 hover:bg-[#4c1d95] active:scale-[0.98] sm:flex"
+                    className="hidden min-w-[44px] h-11 items-center justify-center rounded-xl border px-5 font-mono text-[14px] transition-colors duration-200 active:scale-[0.98] sm:flex theme-signin"
+                    data-no-flip
                   >
                     {t.signIn}
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setMenuOpen(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(true);
+                    }}
                     aria-label={t.menu}
                     className="grid size-11 place-items-center rounded-xl border border-white/15 bg-surface/90 text-amber-300 shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all hover:border-amber-400/50 hover:bg-surface-2 hover:text-amber-200 lg:hidden"
+                    data-no-flip
                   >
                     <DotsNine size={18} />
                   </button>
@@ -125,9 +182,13 @@ export function Hero() {
               {/* Desktop rail: menu pill + vertical wordmark */}
               <button
                 type="button"
-                onClick={() => setMenuOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(true);
+                }}
                 aria-label={t.menu}
-                className="group absolute left-6 xl:left-8 top-6 xl:top-8 z-20 hidden flex-col items-center gap-3 rounded-2xl border border-white/15 bg-surface/90 backdrop-blur-xl p-1.5 pb-3 shadow-[0_10px_35px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-amber-400/50 hover:bg-surface-2 hover:shadow-[0_10px_35px_rgba(251,191,36,0.18)] lg:flex"
+                className="group absolute left-6 xl:left-8 top-6 xl:top-8 z-30 hidden flex-col items-center gap-3 rounded-2xl border border-white/15 bg-surface/90 backdrop-blur-xl p-2 pb-4 shadow-[0_10px_35px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-amber-400/50 hover:bg-surface-2 hover:shadow-[0_10px_35px_rgba(251,191,36,0.18)] lg:flex min-h-[44px] min-w-[44px]"
+                data-no-flip
               >
                 <span className="grid size-10 place-items-center rounded-xl border border-amber-400/35 bg-amber-400/15 text-amber-300 shadow-[0_0_16px_-2px_rgba(251,191,36,0.45)] transition-all duration-300 group-hover:scale-105 group-hover:border-amber-400 group-hover:bg-amber-400/25 group-hover:text-amber-200 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.65)]">
                   <BrandMark className="size-5" strokeWidth={1.8} />
@@ -139,40 +200,45 @@ export function Hero() {
                 )}
                 <DotsNine size={14} className="text-amber-400/80 transition-colors group-hover:text-amber-300" aria-hidden />
               </button>
-              {/* Horizontal brand title centered directly above 3D Sphere with 3D DepthText */}
+
+              {/* Horizontal brand title centered directly above 3D Sphere with dual-tone SparkleButton (hover glare animation) */}
               <div
                 aria-hidden
-                className="pointer-events-none select-none absolute top-[8vh] inset-x-0 z-20 hidden justify-center -translate-x-4 sm:-translate-x-8 lg:-translate-x-16 xl:-translate-x-16 2xl:-translate-x-8 lg:flex"
+                className="pointer-events-none select-none absolute top-[5.5vh] inset-x-0 z-20 hidden justify-center -translate-x-4 sm:-translate-x-8 lg:-translate-x-16 xl:-translate-x-16 2xl:-translate-x-8 lg:flex"
               >
-                <DepthText
-                  text="Kalpavriksha"
-                  fontSize="clamp(40px, 5.15vw, 74px)"
-                  fontWeight={400}
-                  faceColor="#FFFFFF"
-                  depthColor="#6d28d9"
-                  layers={17}
-                  depth={3.2}
-                  tilt={8}
-                  perspective={1000}
-                  autoOrbit={true}
-                  orbitSpeed={0.3}
-                  float={true}
-                  pointerTracking={true}
-                  shadow={true}
-                  active={!isFlipped}
-                  className="font-title [--depth-text-letter-spacing:-0.005em] drop-shadow-[0_2px_12px_rgba(0,0,0,0.32)]"
+                <SparkleButton
+                  as="h1"
+                  text={t.appName ?? "Kalpavriksha"}
+                  fontSize={locale === "ta" ? "clamp(48px, 6.4vw, 92px)" : "clamp(60px, 8vw, 116px)"}
+                  fontWeight={isDark ? 700 : 600}
+                  lineHeight={0.95}
+                  letterSpacing="-0.005em"
+                  textColor={isDark ? "#FFFFFF" : "#110826"}
+                  shadowColor={isDark ? "#1E0028" : "rgba(124, 58, 237, 0.25)"}
+                  glareColor={isDark ? "#4A105DBF" : "rgba(124, 58, 237, 0.55)"}
+                  className={`font-title pointer-events-auto ${
+                    isDark
+                      ? "drop-shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+                      : "drop-shadow-[0_2px_10px_rgba(124,58,237,0.1)]"
+                  }`}
                 />
               </div>
 
-              {/* 3D Sphere Gallery canvas — shifted down for harmonious breathing room */}
+              {/* 3D Sphere Gallery canvas — normal full size */}
               <div
                 data-no-flip="true"
-                className="absolute inset-0 z-10 h-full w-full -translate-x-4 sm:-translate-x-8 lg:-translate-x-16 xl:-translate-x-16 2xl:-translate-x-8 translate-y-12 sm:translate-y-14 lg:translate-y-16"
+                className="absolute inset-0 z-10 h-full w-full -translate-x-4 sm:-translate-x-8 lg:-translate-x-16 xl:-translate-x-16 2xl:-translate-x-8 translate-y-12 sm:translate-y-14 lg:translate-y-16 will-change-transform contain-strict"
               >
                 <SphereGallery3D
-                  scale={68}
-                  size={28}
+                  scale={65}
+                  size={26}
                   background="transparent"
+                  placeholder={isDark ? "#1b1b20" : "#e7d9f8"}
+                  core={
+                    isDark
+                      ? { coreSize: 24, coreColor: "#FFFFFF59", lineColor: "#FFFFFF59" }
+                      : { coreSize: 24, coreColor: "#ffffff", lineColor: "#7c3aed66" }
+                  }
                   active={!isFlipped}
                   style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}
                 />
@@ -198,9 +264,9 @@ export function Hero() {
                     fontWeight={600}
                     letterSpacing={locale === "en" ? "-0.015em" : "-0.005em"}
                     lineHeight={locale === "en" ? 0.98 : 1.1}
-                    textColor="#C3AFD4"
-                    shadowColor="#1E0028"
-                    glareColor="#4A105DBF"
+                    textColor={isDark ? "#F4EEFF" : "#1a0833"}
+                    shadowColor={isDark ? "#1E0028" : "rgba(124, 58, 237, 0.25)"}
+                    glareColor={isDark ? "#4A105DBF" : "rgba(124, 58, 237, 0.55)"}
                     className="w-full"
                   />
                 </div>
@@ -208,7 +274,7 @@ export function Hero() {
                 {/* 2. Middle interactive showcase: cards span the rail, contents centred */}
                 <div className="hidden w-full flex-col items-center gap-3 sm:flex">
                   {/* Tagline / Subtitle */}
-                  <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-ink/80 text-center">
+                  <p className="font-mono text-[12.5px] font-semibold uppercase tracking-[0.18em] text-violet-ink text-center">
                     {t.tagline[0]} — {t.tagline[1]}
                   </p>
 
@@ -218,31 +284,45 @@ export function Hero() {
                       const Icon = m.icon;
                       const accent = accentOf(m.accent);
                       return (
-                        <Link
+                        <LiquidGlassSurface
                           key={m.id}
-                          href={`/m/${m.slug}`}
-                          className="group flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl border border-white/12 bg-[#140d28]/90 px-3.5 py-3 text-center shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-violet/50 hover:bg-[#1e133c] hover:shadow-[0_12px_28px_-4px_rgba(147,51,234,0.3)]"
+                          radius={16}
+                          className="group relative z-10 w-full border border-white/10 shadow-[0_12px_40px_-20px_rgb(0_0_0/0.8)]"
                         >
-                          <span className={`w-8 shrink-0 text-center font-mono text-[11px] font-semibold ${accent.text} transition-colors`}>
-                            {m.index}
-                          </span>
-                          <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-text group-hover:text-violet-ink transition-colors">
-                            {m.title[locale]}
-                          </span>
-                          <span className={`grid size-8 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-surface-2 ${accent.text} shadow-sm transition-transform duration-200 group-hover:scale-105`}>
-                            {m.iconImage ? (
-                              <Image
-                                src={m.iconImage}
-                                alt={m.title[locale]}
-                                width={32}
-                                height={32}
-                                className="size-full object-cover"
-                              />
-                            ) : (
-                              <Icon size={16} weight="duotone" />
-                            )}
-                          </span>
-                        </Link>
+                          <Link
+                            href={`/m/${m.slug}`}
+                            className="relative z-10 group flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-center transition-all duration-300 hover:-translate-y-0.5"
+                          >
+                            <span className={`w-8 shrink-0 text-center font-mono text-[11px] font-semibold ${accent.text} transition-colors`}>
+                              {m.index}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold text-text group-hover:text-violet-ink transition-colors">
+                              {m.title[locale]}
+                            </span>
+                            <span
+                              className={`grid size-8 shrink-0 place-items-center overflow-hidden rounded-xl border transition-transform duration-200 group-hover:scale-105 ${
+                                isDark
+                                  ? `border-white/10 bg-surface-2 shadow-sm ${accent.text}`
+                                  : "border-violet/20 bg-white shadow-[0_1px_3px_rgba(76,29,149,0.14)] " + accent.text
+                              }`}
+                            >
+                              {/* The raster module art is drawn light-on-violet, so it
+                                  disappears on a pearl card. Light mode uses the
+                                  matching duotone glyph instead. */}
+                              {isDark && m.iconImage ? (
+                                <Image
+                                  src={m.iconImage}
+                                  alt={m.title[locale]}
+                                  width={32}
+                                  height={32}
+                                  className="size-full object-cover"
+                                />
+                              ) : (
+                                <Icon size={17} weight="duotone" />
+                              )}
+                            </span>
+                          </Link>
+                        </LiquidGlassSurface>
                       );
                     })}
                   </div>
@@ -252,10 +332,10 @@ export function Hero() {
                     {t.stats.map((stat, i) => (
                       <span
                         key={i}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 font-mono text-[11.5px] text-muted backdrop-blur-md shadow-sm transition-colors hover:border-white/20"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 font-mono text-[11.5px] text-text/75 backdrop-blur-md shadow-sm transition-colors hover:border-white/20"
                       >
                         <strong className="font-semibold text-amber-300">{stat.value}</strong>
-                        <span className="text-muted/90">{stat.label}</span>
+                        <span className="text-text/80">{stat.label}</span>
                       </span>
                     ))}
                   </div>
@@ -263,10 +343,10 @@ export function Hero() {
 
                 {/* 3. Bottom copy & explore link */}
                 <div className="flex w-full flex-col items-center text-center">
-                  <p className="w-full font-sans text-[14px] leading-relaxed text-muted/90">{t.lead}</p>
+                  <p className="w-full font-sans text-[15px] leading-relaxed text-text/90">{t.lead}</p>
                   <a
                     href="#modules"
-                    className="group mt-3.5 inline-flex min-h-11 items-center gap-2 rounded-full border border-violet/30 bg-violet/10 px-5 py-2 font-mono text-[13px] font-medium text-violet-ink backdrop-blur-md shadow-[0_4px_16px_rgba(147,51,234,0.2)] transition-all duration-300 hover:border-violet/60 hover:bg-violet-deep hover:text-white hover:shadow-[0_6px_25px_rgba(168,85,247,0.35)] active:scale-[0.98]"
+                    className="group mt-3.5 inline-flex min-h-11 items-center gap-2 rounded-full border px-5 py-2 font-mono text-[13px] font-medium transition-all duration-300 active:scale-[0.98] theme-explore"
                   >
                     <span>{t.explore}</span>
                     <ArrowDown size={13} className="transition-transform duration-200 group-hover:translate-y-0.5 text-amber-300" />
@@ -277,39 +357,60 @@ export function Hero() {
           }
           back={
             /* FLIP SIDE: Particle Tree View */
-            <div className="relative flex h-full w-full flex-col overflow-y-auto bg-transparent lg:block lg:overflow-hidden">
+            <div className="relative flex h-full w-full flex-col overflow-y-auto bg-transparent lg:block lg:overflow-hidden scrollbar-glass">
 
-              {/* Top bar — flows on mobile, pinned on desktop */}
-              <div className="z-20 flex items-center justify-between gap-3 px-5 py-4 sm:p-6 lg:absolute lg:right-8 xl:right-12 lg:top-8 lg:p-0">
+              {/* Top bar — flows on mobile, pinned on desktop (no-flip zone: stops propagation to FlipCard) */}
+              <div
+                className="z-30 flex items-center justify-between gap-3 px-5 py-4 sm:p-6 lg:absolute lg:right-8 xl:right-12 lg:top-8 lg:p-0"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <span className="flex items-center gap-2 font-headline font-semibold text-lg tracking-tight lg:hidden">
                   <BrandMark className="size-6 text-amber-400" strokeWidth={1.8} />
-                  Kalpavriksha
+                  <SparkleButton
+                    as="span"
+                    text={t.appName ?? "Kalpavriksha"}
+                    fontSize={locale === "ta" ? "clamp(20px, 2.8vw, 28px)" : "clamp(22px, 3vw, 30px)"}
+                    fontWeight={700}
+                    lineHeight={1.1}
+                    letterSpacing="-0.02em"
+                    textColor={isDark ? "#F4EEFF" : "#1a0833"}
+                    shadowColor={isDark ? "#1E0028" : "rgba(124, 58, 237, 0.25)"}
+                    glareColor={isDark ? "#4A105DBF" : "rgba(124, 58, 237, 0.55)"}
+                    className="select-none"
+                  />
                 </span>
                 <div className="flex items-center gap-2">
-                  <LangSelect />
+                  <LangSelect data-no-flip />
+                  <ThemeToggle data-no-flip />
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsFlipped(false);
                     }}
-                    className="flex h-11 items-center gap-2 rounded-xl border border-line bg-white/[0.06] px-3.5 font-mono text-[14px] text-text transition-colors duration-200 hover:border-violet/40 hover:bg-violet-deep hover:text-violet-ink active:scale-[0.98]"
+                    className="flex min-w-[44px] h-11 items-center justify-center gap-2 rounded-xl border border-line bg-white/[0.06] px-4 font-mono text-[14px] text-text transition-colors duration-200 hover:border-violet/40 hover:bg-violet-deep hover:text-violet-ink active:scale-[0.98]"
                     title="Return to 3D Sphere Gallery"
+                    data-no-flip
                   >
                     <ArrowsClockwise size={15} />
                     <span className="hidden sm:inline">3D Gallery</span>
                   </button>
                   <Link
                     href="/sign-in"
-                    className="hidden h-11 items-center rounded-xl border border-violet/25 bg-violet-deep px-5 font-mono text-[14px] text-violet-ink transition-colors duration-200 hover:bg-[#4c1d95] active:scale-[0.98] sm:flex"
+                    className="hidden min-w-[44px] h-11 items-center justify-center rounded-xl border px-5 font-mono text-[14px] transition-colors duration-200 active:scale-[0.98] sm:flex theme-signin"
+                    data-no-flip
                   >
                     {t.signIn}
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setMenuOpen(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(true);
+                    }}
                     aria-label={t.menu}
                     className="grid size-11 place-items-center rounded-xl border border-white/15 bg-surface/90 text-amber-300 shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all hover:border-amber-400/50 hover:bg-surface-2 hover:text-amber-200 lg:hidden"
+                    data-no-flip
                   >
                     <DotsNine size={18} />
                   </button>
@@ -319,9 +420,13 @@ export function Hero() {
               {/* Desktop rail: menu pill + vertical wordmark */}
               <button
                 type="button"
-                onClick={() => setMenuOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(true);
+                }}
                 aria-label={t.menu}
-                className="group absolute left-6 xl:left-8 top-6 xl:top-8 z-20 hidden flex-col items-center gap-3 rounded-2xl border border-white/15 bg-surface/90 backdrop-blur-xl p-1.5 pb-3 shadow-[0_10px_35px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-amber-400/50 hover:bg-surface-2 hover:shadow-[0_10px_35px_rgba(251,191,36,0.18)] lg:flex"
+                className="group absolute left-6 xl:left-8 top-6 xl:top-8 z-30 hidden flex-col items-center gap-3 rounded-2xl border border-white/15 bg-surface/90 backdrop-blur-xl p-2 pb-4 shadow-[0_10px_35px_rgba(0,0,0,0.6)] transition-all duration-300 hover:border-amber-400/50 hover:bg-surface-2 hover:shadow-[0_10px_35px_rgba(251,191,36,0.18)] lg:flex min-h-[44px] min-w-[44px]"
+                data-no-flip
               >
                 <span className="grid size-10 place-items-center rounded-xl border border-amber-400/35 bg-amber-400/15 text-amber-300 shadow-[0_0_16px_-2px_rgba(251,191,36,0.45)] transition-all duration-300 group-hover:scale-105 group-hover:border-amber-400 group-hover:bg-amber-400/25 group-hover:text-amber-200 group-hover:shadow-[0_0_22px_rgba(251,191,36,0.65)]">
                   <BrandMark className="size-5" strokeWidth={1.8} />
@@ -333,38 +438,36 @@ export function Hero() {
                 )}
                 <DotsNine size={14} className="text-amber-400/80 transition-colors group-hover:text-amber-300" aria-hidden />
               </button>
-              {/* Horizontal brand title centered directly above 3D Sphere with 3D DepthText */}
+              {/* Horizontal brand title centered directly above particle tree with dual-tone SparkleButton (hover glare animation) */}
               <div
                 aria-hidden
-                className="pointer-events-none select-none absolute top-[8vh] inset-x-0 z-20 hidden justify-center -translate-x-4 sm:-translate-x-8 lg:-translate-x-16 xl:-translate-x-16 2xl:-translate-x-8 lg:flex"
+                className="pointer-events-none select-none absolute top-[5.5vh] inset-x-0 z-20 hidden justify-center lg:flex"
               >
-                <DepthText
-                  text="Kalpavriksha"
-                  fontSize="clamp(40px, 5.15vw, 74px)"
-                  fontWeight={400}
-                  faceColor="#FFFFFF"
-                  depthColor="#6d28d9"
-                  layers={17}
-                  depth={3.2}
-                  tilt={8}
-                  perspective={1000}
-                  autoOrbit={true}
-                  orbitSpeed={0.3}
-                  float={true}
-                  pointerTracking={true}
-                  shadow={true}
-                  active={isFlipped}
-                  className="font-title [--depth-text-letter-spacing:-0.005em] drop-shadow-[0_2px_12px_rgba(0,0,0,0.32)]"
+                <SparkleButton
+                  as="h1"
+                  text={t.appName ?? "Kalpavriksha"}
+                  fontSize={locale === "ta" ? "clamp(48px, 6.4vw, 92px)" : "clamp(60px, 8vw, 116px)"}
+                  fontWeight={isDark ? 700 : 600}
+                  lineHeight={0.95}
+                  letterSpacing="-0.005em"
+                  textColor={isDark ? "#FFFFFF" : "#110826"}
+                  shadowColor={isDark ? "#1E0028" : "rgba(124, 58, 237, 0.25)"}
+                  glareColor={isDark ? "#4A105DBF" : "rgba(124, 58, 237, 0.55)"}
+                  className={`font-title pointer-events-auto ${
+                    isDark
+                      ? "drop-shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+                      : "drop-shadow-[0_2px_10px_rgba(124,58,237,0.1)]"
+                  }`}
                 />
               </div>
 
-              {/* Particle stage — shifted down for harmonious breathing room */}
-              <div className="hero-stage relative mx-auto aspect-square w-full max-w-[560px] shrink-0 translate-y-6 sm:translate-y-8 lg:translate-y-10 lg:absolute lg:bottom-28 lg:left-[9%] lg:top-0 lg:aspect-auto lg:w-[54%] lg:max-w-none">
-                <ParticleCanvas shape={shape} className="absolute inset-0 h-full w-full" active={isFlipped} />
+              {/* Particle stage — centered towards viewport middle */}
+              <div className="hero-stage relative mx-auto aspect-square w-full max-w-[560px] shrink-0 translate-y-6 sm:translate-y-8 lg:translate-y-6 lg:absolute lg:inset-x-0 lg:bottom-16 lg:top-8 lg:mx-auto lg:aspect-auto lg:w-full lg:max-w-[760px] xl:max-w-[860px] 2xl:max-w-[960px] lg:left-1/2 lg:-translate-x-1/2 will-change-transform contain-strict">
+                <ParticleCanvas shape={shape} className="absolute inset-0 h-full w-full pointer-events-none will-change-transform contain-strict" active={isFlipped} />
                 {t.stats.map((stat, i) => (
                   <div
                     key={i}
-                    className={`fade-up absolute ${STAT_POSITIONS[i] ?? ""} text-center`}
+                    className={`fade-up absolute ${STAT_POSITIONS[i] ?? ""} text-center pointer-events-auto`}
                     style={{ animationDelay: `${900 + i * 120}ms` }}
                   >
                     <span className="block font-mono text-[14px] text-text">{stat.value}</span>
@@ -375,14 +478,14 @@ export function Hero() {
 
               {/* Eyebrow, left of the cloud (desktop) */}
               <p
-                className="fade-up absolute left-[10%] top-[20%] z-10 hidden max-w-[210px] text-right text-[13px] leading-snug text-violet lg:block"
+                className="fade-up absolute left-6 xl:left-8 top-[20%] z-10 hidden max-w-[210px] text-left text-[13px] leading-snug text-violet lg:block"
                 style={{ animationDelay: "700ms" }}
               >
                 {t.eyebrow}
               </p>
 
               {/* Copy block */}
-              <div className="hero-copy relative z-10 shrink-0 px-5 pb-2 sm:px-8 lg:absolute lg:right-8 xl:right-12 lg:top-[27%] lg:w-[44%] lg:p-0 lg:text-right [container-type:inline-size]">
+              <div className="hero-copy pointer-events-auto relative z-10 shrink-0 px-5 pb-2 sm:px-8 lg:absolute lg:right-8 xl:right-12 lg:top-[27%] lg:w-[38%] xl:w-[34%] lg:p-0 lg:text-right [container-type:inline-size]">
                 <p className="fade-up font-mono text-[13px] leading-relaxed text-violet" style={{ animationDelay: "500ms" }}>
                   {t.tagline[0]}
                   <br />
@@ -402,9 +505,9 @@ export function Hero() {
                     fontWeight={600}
                     letterSpacing={locale === "en" ? "-0.025em" : "-0.01em"}
                     lineHeight={locale === "en" ? 0.92 : 1.08}
-                    textColor="#FFFFFF"
-                    shadowColor="#3b0764"
-                    glareColor="rgba(255, 255, 255, 0.85)"
+                    textColor={isDark ? "#FFFFFF" : "#1a0833"}
+                    shadowColor={isDark ? "#3b0764" : "rgba(124, 58, 237, 0.25)"}
+                    glareColor={isDark ? "rgba(255, 255, 255, 0.85)" : "rgba(124, 58, 237, 0.55)"}
                     className="w-full text-right"
                   />
                 </div>
@@ -432,42 +535,47 @@ export function Hero() {
                   setHovering(false);
                   setSlot(-1);
                 }}
-                className="relative z-10 flex shrink-0 touch-auto gap-2 overflow-x-auto px-5 pb-5 pt-6 [scrollbar-width:none] sm:px-8 lg:absolute lg:bottom-10 lg:left-[112px] xl:left-[128px] lg:max-w-[52%] lg:flex-wrap lg:overflow-visible lg:p-0"
+                className="relative z-10 flex shrink-0 touch-auto gap-2 overflow-x-auto px-5 pb-5 pt-6 [scrollbar-width:none] sm:px-8 lg:absolute lg:bottom-8 lg:left-6 xl:left-8 lg:max-w-[42%] lg:flex-wrap lg:overflow-visible lg:p-0 scrollbar-thin scrollbar-violet"
               >
                 {MODULES.map((m, i) => {
                   const active = slot === i;
                   const accent = accentOf(m.accent);
                   return (
-                    <Link
+                    <LiquidGlassSurface
                       key={m.id}
-                      href={`/m/${m.slug}`}
-                      onMouseEnter={() => setSlot(i)}
-                      onFocus={() => {
-                        setHovering(true);
-                        setSlot(i);
-                      }}
-                      onBlur={() => setHovering(false)}
-                      aria-current={active ? "true" : undefined}
-                      className={`relative flex min-h-11 shrink-0 items-center gap-2.5 overflow-hidden rounded-full border py-2.5 pl-2 pr-5 text-[14px] transition-colors duration-300 ${
-                        active ? "border-line-strong bg-white/[0.08] text-text" : "border-line text-muted hover:text-text"
-                      }`}
+                      radius={9999}
+                      className="group relative z-10 shrink-0 border border-white/10 shadow-[0_8px_24px_-12px_rgb(0_0_0/0.6)]"
                     >
-                      <span
-                        className={`grid size-8 place-items-center rounded-full font-mono text-[10.5px] transition-colors duration-300 ${
-                          active ? accent.solid : `bg-white/[0.06] text-muted`
+                      <Link
+                        href={`/m/${m.slug}`}
+                        onMouseEnter={() => setSlot(i)}
+                        onFocus={() => {
+                          setHovering(true);
+                          setSlot(i);
+                        }}
+                        onBlur={() => setHovering(false)}
+                        aria-current={active ? "true" : undefined}
+                        className={`relative flex min-h-11 shrink-0 items-center gap-2.5 overflow-hidden rounded-full border py-2.5 pl-2 pr-5 text-[14px] transition-colors duration-300 ${
+                          active ? "border-line-strong bg-white/[0.08] text-text" : "border-line text-muted hover:text-text"
                         }`}
                       >
-                        {m.index}
-                      </span>
-                      <span className="whitespace-nowrap">{m.title[locale]}</span>
-                      {active && !hovering && (
                         <span
-                          aria-hidden
-                          className={`absolute inset-x-3 bottom-0 h-px origin-left ${accent.bar}`}
-                          style={{ animation: `chip-progress ${CYCLE_MS}ms linear both` }}
-                        />
-                      )}
-                    </Link>
+                          className={`grid size-8 place-items-center rounded-full font-mono text-[10.5px] transition-colors duration-300 ${
+                            active ? accent.solid : `bg-white/[0.06] text-muted`
+                          }`}
+                        >
+                          {m.index}
+                        </span>
+                        <span className="whitespace-nowrap">{m.title[locale]}</span>
+                        {active && !hovering && (
+                          <span
+                            aria-hidden
+                            className={`absolute inset-x-3 bottom-0 h-px origin-left ${accent.bar}`}
+                            style={{ animation: `chip-progress ${CYCLE_MS}ms linear both` }}
+                          />
+                        )}
+                      </Link>
+                    </LiquidGlassSurface>
                   );
                 })}
               </nav>

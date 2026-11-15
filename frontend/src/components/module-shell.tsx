@@ -3,45 +3,31 @@
 import { ArrowLeft, Fire, IdentificationCard } from "@phosphor-icons/react/ssr";
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Avatar } from "@/components/avatar";
 import { BrandMark } from "@/components/brand-mark";
 import { ChromeWaves } from "@/components/landing/chrome-waves";
+import { CosmicParticleLayer } from "@/components/cosmic-particle-layer";
 import { LangSelect } from "@/components/landing/lang-select";
 import { useLocale } from "@/components/locale-provider";
 import { GrowthStage, LearnerSetup, useHydrated } from "@/components/learner-setup";
-import { PulsatingBorder } from "@/components/pulsating-border";
 import { useProgress } from "@/components/progress-store";
 import { SoundToggle } from "@/components/sound-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { BAND_INFO } from "@/lib/bands";
-import { bandOf, levelOf, localDay, streak, type Band, type Profile } from "@/lib/progress";
+import { authService } from "@/lib/auth-service";
+import { bandOf, localDay, streak, type Band, type Profile } from "@/lib/progress";
 import { MODULES, type KalpaModule } from "@/modules/registry";
 import { accentOf } from "@/modules/accents";
 
-/** XP, level and streak: the shared student profile, visible on every module. */
+/** Streak and profile avatar: the shared student profile, visible on every module. */
 function ProgressPill() {
   const { t } = useLocale();
   const progress = useProgress();
-  const { level, into, span } = levelOf(progress.xp);
   const days = streak(progress.activeDays, localDay());
 
   return (
     <div className="flex items-center gap-2" data-xp-pill>
-      <div
-        className="hidden h-11 items-center gap-3 rounded-xl border border-line bg-white/[0.04] px-3.5 sm:flex"
-        title={`${progress.xp} XP`}
-      >
-        <span className="font-mono text-[12px] text-muted">
-          {t.level} <span className="text-text">{level}</span>
-        </span>
-        <span className="h-1.5 w-16 overflow-hidden rounded-full bg-white/[0.08]">
-          <span
-            className="block h-full rounded-full bg-gradient-to-r from-glow-a to-glow-b transition-[width] duration-700"
-            style={{ width: `${Math.round((into / span) * 100)}%` }}
-          />
-        </span>
-        <span className="font-mono text-[12px] text-violet-ink">{progress.xp} XP</span>
-      </div>
       {days > 0 && (
         <span
           className="flex h-11 items-center gap-1.5 rounded-xl border border-amber/25 bg-amber/10 px-3 font-mono text-[12px] text-amber"
@@ -55,7 +41,7 @@ function ProgressPill() {
       <Link
         href="/sign-in"
         aria-label={progress.profile ? `${t.myCard}: ${progress.profile.name}` : t.makeCard}
-        className="grid size-11 place-items-center rounded-xl border border-line bg-white/[0.04] transition-colors duration-200 hover:bg-white/[0.1]"
+        className="grid size-11 place-items-center rounded-xl border border-line bg-surface/60 backdrop-blur-md transition-colors duration-200 hover:bg-surface"
       >
         {progress.profile ? (
           <Avatar id={progress.profile.avatar} className="size-8" iconSize={18} />
@@ -68,9 +54,9 @@ function ProgressPill() {
 }
 
 /**
- * Page frame shared by every module screen:
- * Encased in a dedicated solid black layout frame with pulsating structural border glow,
- * housing the header, module title banner, and entire module content.
+ * Full-screen edge-to-edge layout shared by every module screen.
+ * Houses the top navigation header, module banner, and entire module content
+ * without artificial bounding boxes or borders.
  */
 export function ModuleShell({
   module,
@@ -86,37 +72,49 @@ export function ModuleShell({
   const accent = accentOf(module.accent);
   const profile = progress.profile;
   const band = profile ? bandOf(profile.grade) : null;
-  const isJuniorLearn = module.slug === "learn" && profile && profile.grade >= 1 && profile.grade <= 3;
+
+  useEffect(() => {
+    authService.syncWithServer();
+  }, []);
 
   return (
-    <div className="relative isolate min-h-[100dvh] w-full px-2 py-3 sm:px-4 sm:py-6 lg:px-8 lg:py-8">
-      <ChromeWaves />
+    <div
+      data-band={band ?? undefined}
+      style={band ? ({ "--band": BAND_INFO[band].accent } as React.CSSProperties) : undefined}
+      className="relative isolate min-h-[100dvh] w-full"
+    >
+      {/* Consistent Cosmic Purple atmosphere across all modules */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#f8f6fc] dark:bg-[#080312]">
+        {/* 1. Underlying Signature Chrome Waves */}
+        <ChromeWaves />
 
-      {/* Main Module Layout Frame */}
-      <div
-        data-band={band ?? undefined}
-        style={band ? ({ "--band": BAND_INFO[band].accent } as React.CSSProperties) : undefined}
-        className="hero-frame fade-up relative z-10 mx-auto w-full max-w-[1280px]"
-      >
-        {/* Pulsating border glow around the module frame boundaries */}
-        <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
-          <PulsatingBorder colors={["#000000", "#ffffff", accent.hex]} thickness={0.35} />
-        </div>
+        {/* 2. Harmonious Plum & Cosmic Purple Mixup */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(168,85,247,0.2),transparent_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_35%,rgba(236,72,153,0.15),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(99,102,241,0.14),transparent_60%)]" />
 
-        {/* Solid deep black layout container */}
-        <div className={`relative z-10 flex min-h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden rounded-[22px] border border-line ${isJuniorLearn ? "bg-gradient-to-b from-[#130722] via-[#090314] to-[#04010a]" : "bg-black"} p-4 shadow-[0_40px_120px_-20px_rgb(0_0_0/0.95),0_0_90px_-25px_rgb(124_58_237/0.35),inset_0_1px_0_rgb(255_255_255/0.06)] sm:p-7 lg:rounded-[28px] lg:p-9`}>
-          {/* 1. Header: Back to home, module switcher tabs, XP pill & language selector */}
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] pb-4 sm:pb-6">
+        {/* 3. Soft Vignette Edge Shadow for Content Contrast & Space Depth */}
+        <div className="pointer-events-none absolute inset-0 hidden dark:block bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,1,8,0.35)_75%,rgba(2,0,5,0.75)_100%)]" />
+      </div>
+
+      {/* Cosmic Particles & Interactive Petal Bursts Layer (Across All 3 Modules) */}
+      <CosmicParticleLayer moduleSlug={module.slug} />
+
+      {/* Main Full-Screen Content Layer */}
+      <div className={`relative z-10 flex min-h-[100dvh] w-full flex-col ${module.slug === "learn" ? "px-3 py-3 sm:px-6 sm:py-5 md:px-8 lg:px-10" : "px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10 xl:px-14"}`}>
+        {/* 1. Header: Back to home, module switcher tabs, XP pill & language selector */}
+        {(!profile || module.slug !== "learn") && (
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-200/60 dark:border-white/[0.08] pb-4 sm:pb-5">
             <div className="flex items-center gap-2">
               <Link
                 href="/"
-                className="group flex h-11 items-center gap-2 rounded-xl border border-line bg-white/[0.04] px-3 text-sm transition-colors duration-200 hover:bg-white/[0.1]"
+                className="group flex h-11 items-center gap-2 rounded-xl border border-line bg-surface/60 px-3 text-sm text-text backdrop-blur-md transition-colors duration-200 hover:bg-surface"
               >
                 <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
                 <BrandMark className="size-5 text-violet" />
                 <span className="sr-only sm:not-sr-only">{t.home}</span>
               </Link>
-              <nav aria-label={t.modulesTitle} className="flex gap-1 rounded-xl border border-line bg-white/[0.03] p-1">
+              <nav aria-label={t.modulesTitle} className="flex gap-1 rounded-xl border border-line bg-surface/60 p-1 backdrop-blur-md">
                 {MODULES.map((m) => {
                   const ModIcon = m.icon;
                   const active = m.slug === module.slug;
@@ -141,64 +139,57 @@ export function ModuleShell({
             <div className="flex items-center gap-2">
               <ProgressPill />
               <SoundToggle />
+              <ThemeToggle />
               <LangSelect />
             </div>
           </header>
+        )}
 
-          {/* 2. Module Banner: Icon, Title, Summary & Grade Badge */}
-          {!isJuniorLearn && (
-            <div className="fade-up mt-6 flex items-start gap-4 sm:mt-8 sm:items-center">
-              <span className={`hidden size-14 shrink-0 place-items-center overflow-hidden rounded-2xl sm:grid ${accent.banner}`}>
-              {module.iconImage ? (
-                <Image
-                  src={module.iconImage}
-                  alt={module.title[locale]}
-                  width={56}
-                  height={56}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <Icon size={28} weight="duotone" />
-              )}
-            </span>
-            <div>
-              <p className={`font-mono text-[12px] ${accent.text}`}>{module.index}</p>
-              <h1
-                className={`font-display text-text ${
-                  locale === "en"
-                    ? "text-[clamp(36px,5.5vw,68px)] leading-[0.95] tracking-[-0.05em]"
-                    : "text-[clamp(28px,4.4vw,54px)] leading-[1.1] tracking-[-0.01em]"
-                }`}
-              >
+        {/* 2. Module Banner: Styled hero matching Module 1 exactly */}
+        {module.slug !== "learn" && (
+          <section className="relative z-10 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center rounded-3xl border border-purple-800/30 bg-gradient-to-r from-[#170a2c]/80 via-[#210e3f]/60 to-[#120724]/80 p-6 sm:p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(10,4,20,0.5)]">
+            {/* Left: Titles matching 1st module */}
+            <div className="lg:col-span-6 flex flex-col gap-2.5">
+              <h1 className="module-hero-title font-serif text-3xl sm:text-4xl lg:text-5xl font-black tracking-wider text-white uppercase drop-shadow-[0_2px_18px_rgba(168,85,247,0.35)]">
                 {module.title[locale]}
               </h1>
-              <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">{module.summary[locale]}</p>
-              {band && (
-                <Link
-                  href="/sign-in"
-                  className="mt-3 inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--band)_40%,transparent)] bg-[color-mix(in_srgb,var(--band)_10%,transparent)] py-1 pl-1 pr-3 text-[12.5px] text-[var(--band)] transition-colors hover:bg-[color-mix(in_srgb,var(--band)_18%,transparent)]"
-                >
-                  <GrowthStage band={band} className="size-6" />
-                  {BAND_INFO[band].name[locale]} · {BAND_INFO[band].classes[locale]}
-                </Link>
-              )}
+              <p className="font-display text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-300 via-pink-200 to-indigo-300 bg-clip-text text-transparent">
+                {locale === "en" ? "Explore. Discover. Grow." : "ஆராய்க. வளர்க. உயர்க."}
+              </p>
+              <p className="font-headline text-sm sm:text-base text-purple-200/70 max-w-md">
+                {locale === "en"
+                  ? "Your learning journey, beautifully connected."
+                  : "உங்கள் கற்றல் பயணம், அழகாக இணைக்கப்பட்டுள்ளது."}
+              </p>
             </div>
-          </div>
-          )}
 
-          {/* 3. Main Content: Everything inside this black layout */}
-          <main className={`${module.slug === "learn" ? "mt-5 sm:mt-6" : "mt-8 sm:mt-10"} flex-1`}>
-            {!hydrated ? (
-              <div aria-hidden className="h-72 animate-pulse rounded-3xl border border-line bg-surface/60" />
-            ) : profile && band ? (
-              children(band, profile)
-            ) : (
-              <div className="rounded-[28px] border border-line bg-surface/80 p-5 backdrop-blur-sm sm:p-10">
-                <LearnerSetup />
+            {/* Right: 3D Scene */}
+            <div className="lg:col-span-6 relative flex items-center justify-center lg:justify-end">
+              <div className="relative w-full max-w-[420px] aspect-[780/324] cosmic-prop-float transition-transform duration-500 hover:scale-[1.03]">
+                <Image
+                  src={module.slug === "grow" ? "/images/modules/tree-growth.png" : "/images/modules/gk-songs-raw.png"}
+                  alt={module.title[locale]}
+                  fill
+                  priority
+                  className="object-contain drop-shadow-[0_10px_35px_rgba(168,85,247,0.4)]"
+                />
               </div>
-            )}
-          </main>
-        </div>
+            </div>
+          </section>
+        )}
+
+        {/* 3. Main Content: Full Screen Width across all modules */}
+        <main className={`${module.slug === "learn" ? "mt-2 sm:mt-3" : "mt-8 sm:mt-10"} flex-1 w-full pb-8 sm:pb-12`}>
+          {!hydrated ? (
+            <div aria-hidden className="h-72 animate-pulse rounded-3xl border border-line bg-surface/60" />
+          ) : profile && band ? (
+            children(band, profile)
+          ) : (
+            <div className="mx-auto max-w-4xl rounded-[28px] border border-line bg-surface/80 p-5 backdrop-blur-sm sm:p-10">
+              <LearnerSetup redirectTo={module.slug === "learn" ? "/m/learn" : undefined} />
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

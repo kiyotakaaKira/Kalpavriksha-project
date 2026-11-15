@@ -21,6 +21,7 @@ import { useLocale } from "@/components/locale-provider";
 import { updateProgress, useProgress } from "@/components/progress-store";
 import { cue } from "@/lib/feedback";
 import { XP, localDay, recordQuiz, type Band } from "@/lib/progress";
+import { LiquidGlassSurface } from "@/components/liquid-glass-surface";
 import {
   bandToGkLevel,
   GK_COPY,
@@ -248,10 +249,11 @@ export function Quiz({
 
       {/* PHASE 1: INTRO SCREEN */}
       {phase === "intro" && (
-        <div
-          style={{ "--lvl-accent": levelInfo.accent } as React.CSSProperties}
-          className="fade-up relative flex flex-col items-center overflow-hidden rounded-[28px] border border-line bg-surface px-6 py-12 text-center sm:py-16"
-        >
+        <div style={{ "--lvl-accent": levelInfo.accent } as React.CSSProperties}>
+          <LiquidGlassSurface
+            radius={28}
+            className="fade-up relative flex flex-col items-center overflow-hidden border border-purple-200/70 dark:border-white/10 bg-white/75 dark:bg-[#0d0720]/80 shadow-[0_12px_36px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] px-6 py-12 text-center sm:py-16"
+          >
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_60%_at_50%_0%,color-mix(in_srgb,var(--lvl-accent)_22%,transparent),transparent_70%)]"
@@ -301,16 +303,18 @@ export function Quiz({
             <span>{c.startQuiz} ({levelInfo.name[locale]})</span>
             <ArrowRight size={16} />
           </button>
+        </LiquidGlassSurface>
         </div>
       )}
 
       {/* PHASE 2: PLAYING QUIZ */}
       {phase === "play" && question && (
-        <div
-          key={step}
-          style={{ "--lvl-accent": levelInfo.accent } as React.CSSProperties}
-          className="fade-up rounded-[28px] border border-line bg-surface p-5 sm:p-8"
-        >
+        <div style={{ "--lvl-accent": levelInfo.accent } as React.CSSProperties}>
+          <LiquidGlassSurface
+            key={step}
+            radius={28}
+            className="fade-up border border-purple-200/70 dark:border-white/10 bg-white/75 dark:bg-[#0d0720]/80 shadow-[0_12px_36px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] p-5 sm:p-8"
+          >
           {/* Header with Level & Progress */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -373,7 +377,7 @@ export function Quiz({
           )}
 
           {/* Question Title */}
-          <h2 className="mt-6 font-display text-[clamp(20px,2.8vw,30px)] leading-snug tracking-[-0.02em] text-balance">
+          <h2 className="mt-6 font-serif text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
             {question.q[locale]}
           </h2>
 
@@ -452,6 +456,7 @@ export function Quiz({
               </button>
             </div>
           )}
+        </LiquidGlassSurface>
         </div>
       )}
 
@@ -463,10 +468,10 @@ export function Quiz({
           const scorePercent = Math.round((correct / questions.length) * 100);
 
           return (
-            <div className="fade-up flex flex-col gap-4">
-              <div
-                style={{ "--lvl-accent": levelInfo.accent } as React.CSSProperties}
-                className="relative flex flex-col items-center overflow-hidden rounded-[28px] border border-line bg-surface px-6 py-12 text-center"
+            <div className="fade-up flex flex-col gap-4" style={{ "--lvl-accent": levelInfo.accent } as React.CSSProperties}>
+              <LiquidGlassSurface
+                radius={28}
+                className="relative flex flex-col items-center overflow-hidden border border-purple-200/70 dark:border-white/10 bg-white/75 dark:bg-[#0d0720]/80 shadow-[0_12px_36px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] px-6 py-12 text-center"
               >
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lvl-accent)]/40 bg-[color-mix(in_srgb,var(--lvl-accent)_15%,transparent)] px-3 py-1 font-mono text-xs font-semibold text-[var(--lvl-accent)] mb-4">
                   <LevelIcon name={levelInfo.iconName} className="size-3.5" />
@@ -526,7 +531,7 @@ export function Quiz({
                     <span>{c.switchLevel}</span>
                   </button>
                 </div>
-              </div>
+              </LiquidGlassSurface>
 
               {/* Answers Review Details */}
               <details className="group rounded-3xl border border-line bg-surface p-5">

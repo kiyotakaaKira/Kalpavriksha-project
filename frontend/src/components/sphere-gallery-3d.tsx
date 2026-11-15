@@ -5,6 +5,7 @@
 import NextImage from "next/image";
 import * as React from "react";
 import { isCalm } from "@/lib/comfort";
+import { getQualityBudget } from "@/lib/perf/quality";
 import { useWebGLSupport } from "@/lib/perf/use-webgl-support";
 
 export interface GalleryItem {
@@ -32,6 +33,8 @@ export interface SphereGallery3DProps {
   hover?: number;
   rounded?: number;
   core?: CoreGroup;
+  /** Colour used for tiles while their texture is still decoding. */
+  placeholder?: string;
   className?: string;
   style?: React.CSSProperties;
   onBackgroundClick?: () => void;
@@ -545,6 +548,7 @@ interface Live {
   lineColor: string;
   lineOpacity: number;
   rounded: number;
+  placeholderRGB: number[];
   spin: number;
   force: number;
   hoverDist: number;
@@ -619,6 +623,7 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
     hover = 200,
     rounded = 18,
     core = { coreSize: 24, coreColor: "#FFFFFF59", lineColor: "#FFFFFF59" },
+    placeholder = PLACEHOLDER,
     className,
     style,
     onBackgroundClick,
@@ -647,9 +652,12 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
 
   const spinSign = direction === "clockwise" ? -1 : 1;
 
+  const budget = getQualityBudget();
+  const maxBranches = Math.min(MAX_BRANCHES, budget.particles / 100);
+
   const live = React.useRef<Live>({} as Live);
   live.current = {
-    count: branches,
+    count: Math.min(branches, maxBranches),
     radius,
     depthRand: clamp(scatter / 100, 0, 1),
     itemSize: radius * clamp(size / 100, 0.01, 2),
@@ -659,6 +667,7 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
     lineColor,
     lineOpacity: lineAlpha,
     rounded: clamp(rounded / 100, 0, 1),
+    placeholderRGB: parseColor(placeholder, [0.11, 0.11, 0.13, 1]),
     spin: (BASE_SPIN * speed * spinSign) / 50,
     force: clamp(hover / 100, 0, 3),
     hoverDist: radius * clamp((hover / 100) * 0.35, 0, 3),
@@ -733,8 +742,12 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
     const host = hostRef.current;
     if (!canvas || !host) return;
 
+    const budget = getQualityBudget();
+    const sphereW = budget.tier >= 2 ? SPHERE_W : Math.max(16, SPHERE_W / 2);
+    const sphereH = budget.tier >= 2 ? SPHERE_H : Math.max(12, SPHERE_H / 2);
+
     const attrs: WebGLContextAttributes = {
-      antialias: true,
+      antialias: budget.antialias,
       alpha: true,
       premultipliedAlpha: true,
       depth: true,
@@ -787,7 +800,7 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
       gl.STATIC_DRAW
     );
 
-    const ball = buildSphere(SPHERE_W, SPHERE_H);
+    const ball = buildSphere(sphereW, sphereH);
     const ballBuf = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, ballBuf);
     gl.bufferData(gl.ARRAY_BUFFER, ball.positions, gl.STATIC_DRAW);
@@ -1045,7 +1058,6 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
     const qCamLocal: Quat = [0, 0, 0, 1];
     const qRadial: Quat = [0, 0, 0, 1];
     const forwardLocal = [0, 0, -1];
-    const placeholderRGB = parseColor(PLACEHOLDER, [0, 0, 0, 1]);
     const order: number[] = [];
 
     gl.clearColor(0, 0, 0, 0);
@@ -1062,14 +1074,11 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
       }
       raf = requestAnimationFrame(frame);
 
-      if (isCalm()) {
-        prev = performance.now();
-        return;
-      }
-
       const now = performance.now();
-      const dt = Math.min(0.05, (now - prev) / 1000);
+      const rawDt = Math.min(0.05, (now - prev) / 1000);
       prev = now;
+      // In calm mode, freeze motion (dt = 0) so the sphere is rendered in resting pose, never left blank
+      const dt = isCalm() ? 0 : rawDt;
 
       const L = live.current;
       const media = mediaRef.current;
@@ -1317,7 +1326,12 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
         gl.enableVertexAttribArray(qLoc.aCorner);
         gl.vertexAttribPointer(qLoc.aCorner, 2, gl.FLOAT, false, 0, 0);
         gl.uniform1i(qLoc.uMap, 0);
-        gl.uniform3f(qLoc.uPlaceholder, placeholderRGB[0]!, placeholderRGB[1]!, placeholderRGB[2]!);
+        gl.uniform3f(
+          qLoc.uPlaceholder,
+          L.placeholderRGB[0]!,
+          L.placeholderRGB[1]!,
+          L.placeholderRGB[2]!
+        );
         gl.uniform1f(qLoc.uOpacity, 1);
         gl.activeTexture(gl.TEXTURE0);
       };
@@ -1391,13 +1405,13 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
     };
     const io = new IntersectionObserver(
       ([entry]) => {
-        isVisible = !!entry?.isIntersecting;
+        isVisible = entry ? entry.isIntersecting : true;
         if (isVisible && !raf) {
           prev = performance.now();
           raf = requestAnimationFrame(frame);
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0 }
     );
     io.observe(host);
 
@@ -1460,6 +1474,7 @@ function OriginkitBaseSphereGallery3D(props: SphereGallery3DProps) {
     >
       <canvas
         ref={canvasRef}
+        className="will-change-transform contain-strict"
         style={{
           position: "absolute",
           inset: 0,

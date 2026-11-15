@@ -413,13 +413,16 @@ describe("Standard-wise Curriculum Engine (Class 1 to 12)", () => {
     expect(c12BusMath!.chapters[9]?.title.en).toBe("Operations Research");
   });
 
-  it("Scenario 13: Higher Secondary Groups filter exact electives for Commerce, Business Maths, and Computer Science", () => {
-    expect(SENIOR_GROUPS.length).toBe(3);
+  it("Scenario 13: Higher Secondary Groups filter exact electives for Science, Biology, Commerce, and Computer Science", () => {
+    expect(SENIOR_GROUPS.length).toBe(6);
     const groupIds = SENIOR_GROUPS.map((g) => g.id);
-    expect(groupIds).toEqual(["cs", "commerce", "business_maths"]);
+    expect(groupIds).toEqual(["cs", "biology", "pure_science", "commerce", "commerce_ca", "business_maths"]);
 
     expect(getSeniorGroup("cs")?.badge).toBe("Computer Science");
-    expect(getSeniorGroup("commerce")?.badge).toBe("Commerce with CA");
+    expect(getSeniorGroup("biology")?.badge).toBe("Biology Group");
+    expect(getSeniorGroup("pure_science")?.badge).toBe("Pure Science");
+    expect(getSeniorGroup("commerce")?.badge).toBe("Commerce Group");
+    expect(getSeniorGroup("commerce_ca")?.badge).toBe("Commerce with CA");
     expect(getSeniorGroup("business_maths")?.badge).toBe("Business Maths");
     expect(getSeniorGroup("non-existent")).toBeUndefined();
 
@@ -440,9 +443,22 @@ describe("Standard-wise Curriculum Engine (Class 1 to 12)", () => {
     const csCodes = csElectives.map((s) => s.code);
     expect(csCodes).toEqual(["MAT-12", "PHY-12", "CHE-12", "CSC-12"]);
 
+    // 4. Biology Group (Bio-Maths): Biology, Maths, Physics, Chemistry
+    const bioElectives = filterSubjectsByGroup(c12Subjects, "biology", false);
+    const bioCodes = bioElectives.map((s) => s.code);
+    expect(bioCodes).toEqual(["MAT-12", "PHY-12", "CHE-12", "BIO-12"]);
+
+    // 5. Pure Science Group: Physics, Chemistry, Botany, Zoology
+    const pureElectives = filterSubjectsByGroup(c12Subjects, "pure_science", false);
+    const pureCodes = pureElectives.map((s) => s.code);
+    expect(pureCodes).toEqual(["PHY-12", "CHE-12", "BOT-12", "ZOO-12"]);
+
     // When languages are included, Tamil & English are also present
     const commerceFull = filterSubjectsByGroup(c12Subjects, "commerce", true);
     expect(commerceFull.map((s) => s.code)).toEqual(["TAM-12", "ENG-12", "COM-12", "ACC-12", "ECO-12", "CAP-12"]);
+
+    const bioFull = filterSubjectsByGroup(c12Subjects, "biology", true);
+    expect(bioFull.map((s) => s.code)).toEqual(["TAM-12", "ENG-12", "MAT-12", "PHY-12", "CHE-12", "BIO-12"]);
   });
 
   it("Scenario 14: Student profile with Higher Secondary Group persists and parses cleanly", () => {
@@ -460,5 +476,67 @@ describe("Standard-wise Curriculum Engine (Class 1 to 12)", () => {
     const serialized = JSON.stringify(p);
     const parsed = parseProgress(JSON.parse(serialized));
     expect(parsed.profile?.seniorGroup).toBe("commerce");
+  });
+
+  it("Scenario 15: Class 11 and 12 provide exact 6 subjects tailored to the selected Higher Secondary Group", () => {
+    const testGrades = [11, 12] as const;
+
+    for (const grade of testGrades) {
+      const allSubjects = getSubjectsForStandard(grade);
+
+      // Computer Science Group: TAM, ENG, MAT, PHY, CHE, CSC
+      const csGroup = filterSubjectsByGroup(allSubjects, "cs", true);
+      expect(csGroup.length).toBe(6);
+      const csCodes = csGroup.map((s) => s.code);
+      expect(csCodes).toContain(`TAM-${grade}`);
+      expect(csCodes).toContain(`ENG-${grade}`);
+      expect(csCodes).toContain(`MAT-${grade}`);
+      expect(csCodes).toContain(`PHY-${grade}`);
+      expect(csCodes).toContain(`CHE-${grade}`);
+      expect(csCodes).toContain(`CSC-${grade}`);
+
+      // Commerce Group: TAM, ENG, COM, ACC, ECO, CAP
+      const commerceGroup = filterSubjectsByGroup(allSubjects, "commerce", true);
+      expect(commerceGroup.length).toBe(6);
+      const commerceCodes = commerceGroup.map((s) => s.code);
+      expect(commerceCodes).toContain(`TAM-${grade}`);
+      expect(commerceCodes).toContain(`ENG-${grade}`);
+      expect(commerceCodes).toContain(`COM-${grade}`);
+      expect(commerceCodes).toContain(`ACC-${grade}`);
+      expect(commerceCodes).toContain(`ECO-${grade}`);
+      expect(commerceCodes).toContain(`CAP-${grade}`);
+
+      // Business Maths Group: TAM, ENG, COM, ACC, ECO, BMA
+      const bmaGroup = filterSubjectsByGroup(allSubjects, "business_maths", true);
+      expect(bmaGroup.length).toBe(6);
+      const bmaCodes = bmaGroup.map((s) => s.code);
+      expect(bmaCodes).toContain(`TAM-${grade}`);
+      expect(bmaCodes).toContain(`ENG-${grade}`);
+      expect(bmaCodes).toContain(`COM-${grade}`);
+      expect(bmaCodes).toContain(`ACC-${grade}`);
+      expect(bmaCodes).toContain(`ECO-${grade}`);
+      expect(bmaCodes).toContain(`BMA-${grade}`);
+    }
+  });
+
+  it("Scenario 16: Switching standard to Class 11 or 12 with group updates progress state properly", () => {
+    let p = setProfile(EMPTY_PROGRESS, {
+      name: "Lakshmi",
+      avatar: "butterfly",
+      studentId: "KV-2026-1234",
+      grade: 10,
+    });
+    expect(p.profile?.grade).toBe(10);
+    expect(p.profile?.seniorGroup).toBeUndefined();
+
+    // Switch to Class 11 Commerce Group
+    p = updateStudentProfile(p, { grade: 11, seniorGroup: "commerce" });
+    expect(p.profile?.grade).toBe(11);
+    expect(p.profile?.seniorGroup).toBe("commerce");
+
+    // Switch to Class 12 Business Maths Group
+    p = updateStudentProfile(p, { grade: 12, seniorGroup: "business_maths" });
+    expect(p.profile?.grade).toBe(12);
+    expect(p.profile?.seniorGroup).toBe("business_maths");
   });
 });

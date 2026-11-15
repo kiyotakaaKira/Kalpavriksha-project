@@ -82,9 +82,11 @@ import {
   X,
 } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Burst } from "@/components/burst";
-import { GrowthStage, useHydrated } from "@/components/learner-setup";
+import { GrowthStage, LearnerSetup, useHydrated } from "@/components/learner-setup";
+import { LiquidGlassSurface } from "@/components/liquid-glass-surface";
 import { useLocale } from "@/components/locale-provider";
 import { updateProgress, useProgress } from "@/components/progress-store";
 import {
@@ -106,13 +108,13 @@ import {
   MathMonsterMascot,
   PeekingSpaceship,
   RulerMascot,
-  SpaceBear,
-  SpaceKitty,
-  SpacePuppy,
   TamilLetterA,
   TreasureChestMascot,
 } from "./cosmic-mascots";
 import { JuniorCosmicLessonPlayer } from "./junior-lesson-scene";
+import { JuniorSuperAdventure } from "./junior-super-adventure";
+import { SeniorDigitalLearning } from "./senior-digital-learning";
+import { InteractiveChapterClassroom } from "./interactive-chapter-classroom";
 import { KaraokeLines, useReadAloud } from "@/components/read-aloud";
 import { authService } from "@/lib/auth-service";
 import { BAND_INFO } from "@/lib/bands";
@@ -124,6 +126,7 @@ import {
   isSupportedStandard,
   SENIOR_GROUPS,
   type SeniorGroupId,
+  SUPPORTED_STANDARDS,
   TN_CLASS_1_2_3_NEW_TEXTBOOKS_URL,
   TN_NEW_SYLLABUS_2026_27_URL,
   TN_TEXTBOOK_PORTAL_URL,
@@ -594,7 +597,7 @@ function CosmicCurriculumLessonDialog({
         if (e.target === ref.current) close();
       }}
       aria-label={chapter.title[locale]}
-      className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-[32px] border-2 border-violet-500/80 bg-[#0e0524] p-0 text-white shadow-[0_0_80px_rgba(168,85,247,0.5)] backdrop:bg-black/80 backdrop:backdrop-blur-md open:animate-[fade-up_0.45s_var(--ease-out)_both] md:inset-0 md:m-auto md:max-h-[88dvh] md:w-[min(860px,calc(100%-3rem))] md:rounded-[32px]"
+      className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-[32px] border-2 border-violet-500/80 bg-[#0e0524] p-0 text-white shadow-[0_0_80px_rgba(168,85,247,0.5)] backdrop:bg-black/80 backdrop:backdrop-blur-md open:animate-[fade-up_0.45s_var(--ease-out)_both] md:inset-0 md:m-auto md:max-h-[88dvh] md:w-[min(860px,calc(100%-3rem))] md:rounded-[32px] scrollbar-glass"
     >
       <div className="relative flex flex-col p-5 sm:p-8">
         {/* Glow backdrop with stars */}
@@ -1032,7 +1035,7 @@ function StandardCurriculumLessonDialog({
       }}
       aria-label={chapter.title[locale]}
       style={catStyle}
-      className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-[28px] border border-line-strong bg-surface/95 p-0 text-text shadow-[0_-30px_90px_-10px_rgb(0_0_0/0.8)] backdrop-blur-2xl backdrop:bg-black/65 backdrop:backdrop-blur-sm open:animate-[fade-up_0.45s_var(--ease-out)_both] md:inset-0 md:m-auto md:max-h-[88dvh] md:w-[min(820px,calc(100%-3rem))] md:rounded-[28px]"
+      className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-[28px] border border-line-strong bg-surface/95 p-0 text-text shadow-[0_-30px_90px_-10px_rgb(0_0_0/0.8)] backdrop-blur-2xl backdrop:bg-black/65 backdrop:backdrop-blur-sm open:animate-[fade-up_0.45s_var(--ease-out)_both] md:inset-0 md:m-auto md:max-h-[88dvh] md:w-[min(820px,calc(100%-3rem))] md:rounded-[28px] scrollbar-glass"
     >
       <div className="relative flex flex-col p-5 sm:p-8">
         {/* Glow backdrop */}
@@ -1345,8 +1348,9 @@ function CurriculumLessonDialog(props: {
   onClose: () => void;
   onSelectChapter: (chId: string) => void;
 }) {
+  if (!props.chapter || !props.subject) return null;
+
   if (props.standard <= 3) {
-    if (!props.chapter || !props.subject) return null;
     return (
       <div
         role="dialog"
@@ -1360,7 +1364,7 @@ function CurriculumLessonDialog(props: {
       </div>
     );
   }
-  return <StandardCurriculumLessonDialog {...props} />;
+  return <InteractiveChapterClassroom {...props} />;
 }
 
 function CosmicSubjectCard({
@@ -1517,12 +1521,16 @@ function StandardSubjectCard({
   const style = { "--cat": subject.accent } as React.CSSProperties;
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      style={style}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-line bg-surface text-left transition-all duration-300 hover:-translate-y-1 hover:border-[color-mix(in_srgb,var(--cat)_50%,transparent)] hover:shadow-[0_20px_60px_-25px_var(--cat)]"
-    >
+    <div style={style} onClick={onOpen}>
+      <LiquidGlassSurface
+        radius={24}
+        className="group relative flex flex-col overflow-hidden border border-white/10 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_-25px_var(--cat)]"
+      >
+        <button
+          type="button"
+          className="relative flex flex-col overflow-hidden h-full w-full bg-transparent border-none p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cat)]"
+          onClick={(e) => e.stopPropagation()}
+        >
       <span className="relative grid h-36 place-items-center overflow-hidden bg-[radial-gradient(120%_120%_at_30%_10%,color-mix(in_srgb,var(--cat)_40%,transparent),transparent_60%)]">
         <SubjectIcon
           icon={subject.icon}
@@ -1554,7 +1562,9 @@ function StandardSubjectCard({
           </span>
         </span>
       </span>
-    </button>
+      </button>
+    </LiquidGlassSurface>
+  </div>
   );
 }
 
@@ -1577,12 +1587,16 @@ function StandardChapterCard({
   const iconName = resolveChapterIcon(subject, chapter);
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      style={style}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-line bg-surface text-left transition-all duration-300 hover:-translate-y-1 hover:border-[color-mix(in_srgb,var(--cat)_50%,transparent)] hover:shadow-[0_20px_60px_-25px_var(--cat)]"
-    >
+    <div style={style} onClick={onOpen}>
+      <LiquidGlassSurface
+        radius={24}
+        className="group relative flex flex-col overflow-hidden border border-white/10 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_-25px_var(--cat)]"
+      >
+        <button
+          type="button"
+          className="relative flex flex-col overflow-hidden h-full w-full bg-transparent border-none p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cat)]"
+          onClick={(e) => e.stopPropagation()}
+        >
       <span className="relative grid h-36 place-items-center overflow-hidden bg-[radial-gradient(120%_120%_at_30%_10%,color-mix(in_srgb,var(--cat)_40%,transparent),transparent_60%)]">
         <ChapterIcon
           name={iconName}
@@ -1615,7 +1629,9 @@ function StandardChapterCard({
           </span>
         </span>
       </span>
-    </button>
+      </button>
+    </LiquidGlassSurface>
+  </div>
   );
 }
 
@@ -1648,6 +1664,81 @@ function ChapterCard(props: {
   return <StandardChapterCard {...props} />;
 }
 
+function getJuniorSubjectMeta(sub: CurriculumSubject) {
+  const code = sub.code?.toUpperCase() || "";
+  const id = sub.id.toLowerCase();
+  if (code === "TAM" || id.includes("tamil")) {
+    return {
+      gradient: "from-[#381a07] via-[#240f03] to-[#140802]",
+      borderColor: "border-amber-400/70",
+      activeBorder: "border-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.65)]",
+      textColor: "text-amber-300",
+      icon: "🐯",
+      Mascot: TamilLetterA,
+      mascotClass: "size-10 pointer-events-none",
+      funTag: "கதைகள் & பாடல்கள் 📖",
+    };
+  }
+  if (code === "ENG" || id.includes("english")) {
+    return {
+      gradient: "from-[#08223d] via-[#05172b] to-[#030d19]",
+      borderColor: "border-sky-400/70",
+      activeBorder: "border-sky-300 shadow-[0_0_25px_rgba(56,189,248,0.65)]",
+      textColor: "text-sky-300",
+      icon: "🦜",
+      Mascot: BookMascot,
+      mascotClass: "size-10 pointer-events-none",
+      funTag: "Rhymes & Phonics 🔤",
+    };
+  }
+  if (code === "MAT" || id.includes("math")) {
+    return {
+      gradient: "from-[#2f0c3d] via-[#1d0628] to-[#0f0216]",
+      borderColor: "border-fuchsia-400/70",
+      activeBorder: "border-fuchsia-300 shadow-[0_0_25px_rgba(232,121,249,0.65)]",
+      textColor: "text-fuchsia-300",
+      icon: "🍎",
+      Mascot: MathMonsterMascot,
+      mascotClass: "size-10 pointer-events-none",
+      funTag: "Numbers & Shapes 🔢",
+    };
+  }
+  if (code === "EVS" || id.includes("evs") || id.includes("environment")) {
+    return {
+      gradient: "from-[#072d1f] via-[#041d14] to-[#02100b]",
+      borderColor: "border-emerald-400/70",
+      activeBorder: "border-emerald-300 shadow-[0_0_25px_rgba(52,211,153,0.65)]",
+      textColor: "text-emerald-300",
+      icon: "🌱",
+      Mascot: DinosaurMascot,
+      mascotClass: "size-10 pointer-events-none",
+      funTag: "Nature & Animals 🦕",
+    };
+  }
+  if (code === "SCI" || id.includes("science")) {
+    return {
+      gradient: "from-[#08273b] via-[#051b29] to-[#020e17]",
+      borderColor: "border-cyan-400/70",
+      activeBorder: "border-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.65)]",
+      textColor: "text-cyan-300",
+      icon: "🧪",
+      Mascot: DinosaurMascot,
+      mascotClass: "size-10 pointer-events-none",
+      funTag: "World & Science 🔬",
+    };
+  }
+  return {
+    gradient: "from-[#1b1542] via-[#100c2a] to-[#090619]",
+    borderColor: "border-violet-400/70",
+    activeBorder: "border-violet-300 shadow-[0_0_25px_rgba(167,139,250,0.65)]",
+    textColor: "text-violet-300",
+    icon: "🗺️",
+    Mascot: TreasureChestMascot,
+    mascotClass: "size-10 pointer-events-none",
+    funTag: "Our World & Stories 🌍",
+  };
+}
+
 function PersonalisedLearnDashboard({
   band,
   profile,
@@ -1660,25 +1751,41 @@ function PersonalisedLearnDashboard({
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [filter, setFilter] = useState<string>("subjects"); // "subjects" | "all" | subject.id
+  const searchParams = useSearchParams();
+  // Chapter classroom dialog is strictly closed by default, opening only when a chapter is touched/clicked
   const [openChapterId, setOpenChapterId] = useState<string | null>(null);
 
-  // Active Standard (fallback to 6)
-  const currentStandard = isSupportedStandard(profile.grade) ? profile.grade : 6;
-  const isJunior = currentStandard <= 3; // Class 1 to 3 gets cosmic gamified interface!
+  useEffect(() => {
+    const ch = searchParams?.get("chapter");
+    if (ch) {
+      for (const std of SUPPORTED_STANDARDS) {
+        const stdSubjects = getSubjectsForStandard(std);
+        if (stdSubjects.some((s) => s.chapters.some((c) => c.id === ch))) {
+          setOverrideStandard(std);
+          break;
+        }
+      }
+    }
+  }, [searchParams]);
+
+  // Active Standard (defaults to Class 8 as in Digital Learning template)
+  const [overrideStandard, setOverrideStandard] = useState<number | null>(null);
+  const currentStandard = overrideStandard ?? (isSupportedStandard(profile.grade) ? profile.grade : 8);
+  const isJunior = currentStandard <= 3; // Class 1 to 3 gets Super Learning Adventure!
   const isSenior = currentStandard >= 11;
 
   // Selected Group Filter for Class 11 and 12 (strictly cs, commerce, or business_maths)
   const [seniorGroupFilter, setSeniorGroupFilter] = useState<SeniorGroupId>(() => {
-    if (profile.seniorGroup === "cs" || profile.seniorGroup === "commerce" || profile.seniorGroup === "business_maths") {
-      return profile.seniorGroup;
+    if (profile.seniorGroup && getSeniorGroup(profile.seniorGroup)) {
+      return profile.seniorGroup as SeniorGroupId;
     }
     return "cs";
   });
 
   // Keep group filter state synchronized with profile
   useEffect(() => {
-    if (profile.seniorGroup === "cs" || profile.seniorGroup === "commerce" || profile.seniorGroup === "business_maths") {
-      setSeniorGroupFilter(profile.seniorGroup);
+    if (profile.seniorGroup && getSeniorGroup(profile.seniorGroup)) {
+      setSeniorGroupFilter(profile.seniorGroup as SeniorGroupId);
     }
   }, [profile.seniorGroup]);
 
@@ -1704,8 +1811,21 @@ function PersonalisedLearnDashboard({
   // Active chapter opened in dialog
   const activeChapterItem = useMemo(() => {
     if (!openChapterId) return null;
-    return allFlatChapters.find((item) => item.chapter.id === openChapterId) ?? null;
-  }, [openChapterId, allFlatChapters]);
+    const inCurrent = allFlatChapters.find((item) => item.chapter.id === openChapterId);
+    if (inCurrent) {
+      return { standard: currentStandard, subject: inCurrent.subject, chapter: inCurrent.chapter };
+    }
+    for (const std of SUPPORTED_STANDARDS) {
+      const stdSubjects = getSubjectsForStandard(std);
+      for (const s of stdSubjects) {
+        const ch = s.chapters.find((c) => c.id === openChapterId);
+        if (ch) {
+          return { standard: std, subject: s, chapter: ch };
+        }
+      }
+    }
+    return null;
+  }, [openChapterId, allFlatChapters, currentStandard]);
 
   // Personalised Continue Learning record
   const continueRecord = useMemo((): {
@@ -1740,15 +1860,16 @@ function PersonalisedLearnDashboard({
   }, [profile.lastAccessed, currentStandard, allFlatChapters]);
 
   const handleStandardChange = (newStd: number, newGroup?: string) => {
+    setOverrideStandard(newStd);
     authService.updateStandard(newStd, newGroup);
-    if (newGroup === "cs" || newGroup === "commerce" || newGroup === "business_maths") {
-      setSeniorGroupFilter(newGroup);
+    if (newGroup && getSeniorGroup(newGroup)) {
+      setSeniorGroupFilter(newGroup as SeniorGroupId);
     }
     setFilter("subjects");
   };
 
   return (
-    <div className={isJunior ? "relative flex flex-col gap-8" : "flex flex-col gap-8"}>
+    <div className="flex flex-col gap-8">
       {/* Standard Selector Modal */}
       <StandardSwitcherModal
         currentGrade={currentStandard}
@@ -1758,771 +1879,39 @@ function PersonalisedLearnDashboard({
         onSelectStandard={handleStandardChange}
       />
 
-      {isJunior ? (
-        // CLASS 1 TO 3: Cosmic Gamified Dashboard
-        <>
-
-      {/* Cosmic background doodles */}
-      <CosmicBackgroundDoodles />
-
-      {/* [Top Navigation & Header: Class 1-3 Junior Cosmic View] */}
-      <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between border-b border-purple-500/20 pb-7">
-        {/* Left Column: Bubbly Neon Title, Laptop Mascot, Subtitle & Action Badges */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-[clamp(32px,4.5vw,54px)] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-fuchsia-300 to-cyan-300 drop-shadow-[0_0_20px_rgba(244,114,182,0.7)]">
-              Digital Learning!
-            </h1>
-            <LaptopMascot className="size-16 sm:size-20 -mt-2 animate-bounce" />
-            <BlastingRocket className="hidden sm:block size-14 -mt-4 animate-pulse" />
-          </div>
-          <p className="text-sm sm:text-base text-purple-200/90 font-medium">
-            Videos, lessons, songs and stories. Read or listen.
-          </p>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            {/* Green capsule with seedling / tree icon */}
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/80 bg-emerald-950/70 px-4 py-1.5 font-mono text-xs font-semibold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.35)]">
-              <Tree size={15} weight="fill" className="text-emerald-400" />
-              <span>Seed (Seedlings) - Class 1-3 🌱</span>
-            </span>
-            {/* Bouncing pink/violet pill */}
-            <button
-              type="button"
-              onClick={() => setSwitcherOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-pink-400/80 bg-gradient-to-r from-pink-500/25 via-purple-500/30 to-violet-500/25 px-4 py-1.5 font-mono text-xs font-semibold text-pink-200 shadow-[0_0_18px_rgba(244,114,182,0.45)] hover:scale-105 active:scale-95 transition-all"
-            >
-              <span>Change Standard ✏️</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column: Gamified Board-Game Progress Tracker Trail */}
-        <div className="flex flex-col items-start lg:items-end gap-1.5">
-          <span className="font-mono text-xs uppercase tracking-wider text-purple-200/90 font-bold">
-            Progress tracker
-          </span>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <BoardGameTrailSvg done={completedChaptersCount} total={totalChapters} />
-            <HappyStarBadge done={completedChaptersCount} total={totalChapters} />
-            <CheeringAstronautKid className="size-20 sm:size-24 -ml-2" />
-          </div>
-          <p className="font-mono text-xs text-purple-200/90 font-medium">
-            {completedChaptersCount === totalChapters
-              ? "🌟 All caught up! Class completed!"
-              : `${totalChapters - completedChaptersCount} more to complete Class ${currentStandard}!`}
-          </p>
-        </div>
-      </div>
-
-      {/* [The Interactive 2-Column Split: Lesson Adventure Gate + Textbooks & Study Worlds] */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Left Column: The Interactive Lesson Gate ("Adventure Gate") (col-span-12 lg:col-span-5) */}
-        {continueRecord && (
-          <div className="lg:col-span-5 relative overflow-hidden rounded-[28px] border-2 border-violet-500/80 bg-[#160a2f] p-5 sm:p-7 shadow-[0_0_40px_-5px_rgba(168,85,247,0.55),inset_0_0_30px_rgba(168,85,247,0.18)] flex flex-col justify-between">
-            {/* Background magical sparkles and cosmic floaters */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
-              <span className="absolute top-4 left-6 text-pink-400 text-lg animate-ping">✦</span>
-              <span className="absolute top-10 right-8 text-amber-300 text-base animate-pulse">✨</span>
-              <span className="absolute bottom-16 left-8 text-cyan-300 text-sm">✦</span>
-              <span className="absolute bottom-8 right-16 text-yellow-300 text-base animate-pulse">⭐</span>
-            </div>
-
-            <div>
-              {/* Title Badge: ✨ IYAL 5: ADVENTURE GATE! ✨ */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-400/80 bg-gradient-to-r from-pink-500/30 via-purple-500/35 to-violet-500/30 px-3.5 py-1 font-mono text-xs font-bold text-pink-200 shadow-[0_0_15px_rgba(244,114,182,0.45)] animate-pulse">
-                  <span>✨</span>
-                  <span>IYAL {continueRecord.chapter.chapterNumber}: ADVENTURE GATE!</span>
-                  <span>✨</span>
-                </span>
-                <BookMascot className="size-10 sm:size-12 shrink-0 -mt-1" />
-              </div>
-
-              {/* Continue Learning Subtitle */}
-              <p className="font-mono text-xs uppercase tracking-[0.18em] text-fuchsia-300 font-extrabold flex items-center gap-1.5">
-                <span>🪐</span>
-                <span>CONTINUE LEARNING</span>
-              </p>
-
-              {/* Chapter Title */}
-              <h2 className="font-display text-lg sm:text-2xl font-bold tracking-tight text-white mt-1.5 text-balance leading-snug">
-                {continueRecord.chapter.title[locale]} - {continueRecord.subject.name[locale]} - Chapter {continueRecord.chapter.chapterNumber}
-              </h2>
-
-              {/* Mascot Ensemble Around the Gate */}
-              <div className="relative my-5 flex items-center justify-center gap-2 sm:gap-4 py-3 px-2 rounded-2xl bg-[#0f0522]/80 border border-violet-500/30 overflow-hidden">
-                <BabyElephantMascot className="size-14 sm:size-18 shrink-0 transform hover:scale-110 transition-transform" />
-                <LionCubMascot className="size-12 sm:size-14 shrink-0 transform hover:scale-110 transition-transform" />
-
-                {/* Big Cartoon Circular Interactive Button in the center */}
-                <button
-                  type="button"
-                  onClick={() => setOpenChapterId(continueRecord.chapter.id)}
-                  className="group relative flex flex-col items-center justify-center size-24 sm:size-28 shrink-0 rounded-full bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-pink-500 p-2 text-center text-white shadow-[0_0_30px_rgba(236,72,153,0.85)] hover:shadow-[0_0_45px_rgba(236,72,153,1)] hover:scale-105 active:scale-95 transition-all border-2 border-pink-300"
-                >
-                  <span className="text-xl sm:text-2xl animate-bounce">⭐</span>
-                  <span className="font-display text-[10px] sm:text-[11px] font-black leading-tight text-yellow-200">
-                    Tap to Enter & Start Learning!
-                  </span>
-                  <span className="text-[9px] text-pink-100 font-mono">Click Here!</span>
-                </button>
-
-                <KidBoyMascot className="size-12 sm:size-14 shrink-0 transform hover:scale-110 transition-transform" />
-                <KidGirlMascot className="size-12 sm:size-14 shrink-0 transform hover:scale-110 transition-transform" />
-              </div>
-            </div>
-
-            {/* Irresistible Oversized 3D-styled Pink & Purple Resume Play Button */}
-            <div className="mt-4 pt-2">
-              <button
-                type="button"
-                onClick={() => setOpenChapterId(continueRecord.chapter.id)}
-                className="w-full inline-flex h-14 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-pink-500 via-purple-600 to-violet-600 px-8 font-display text-base sm:text-lg font-black text-white shadow-[0_0_35px_rgba(236,72,153,0.85)] hover:shadow-[0_0_50px_rgba(236,72,153,1)] hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-pink-300/80 animate-pulse"
-              >
-                <span>Resume Play!</span>
-                <span className="text-xl">➔</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Right Column: Textbooks + Study Worlds */}
-        <div className="lg:col-span-7 flex flex-col gap-5 justify-between">
-          {/* Top: Official TN Textbooks */}
-          <div className="relative overflow-hidden rounded-[26px] border border-violet-500/40 bg-[#120726]/90 p-4 sm:p-5 shadow-[0_0_25px_-5px_rgba(168,85,247,0.35)]">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2">
-                <TreasureChestMascot className="size-9" />
-                <h3 className="font-display text-base sm:text-lg font-bold text-white flex items-center gap-1.5">
-                  <span>Official TN Textbooks!</span>
-                  <span>📚</span>
-                </h3>
-              </div>
-              <div className="flex items-center gap-1">
-                <SpacePuppy className="size-7" />
-                <SpaceBear className="size-7" />
-                <SpaceKitty className="size-7" />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs">
-              <a
-                href={TN_NEW_SYLLABUS_2026_27_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 rounded-full border border-violet-500/60 bg-violet-950/70 px-4 py-2 text-violet-200 hover:border-pink-400 hover:bg-violet-900/80 hover:text-white shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all hover:scale-105"
-              >
-                <span>New Syllabus 2026–27 ✨</span>
-              </a>
-              <a
-                href={TN_TEXTBOOK_PORTAL_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 rounded-full border border-violet-500/60 bg-violet-950/70 px-4 py-2 text-violet-200 hover:border-pink-400 hover:bg-violet-900/80 hover:text-white shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all hover:scale-105"
-              >
-                <span>TN School Textbooks Portal 🎒</span>
-              </a>
-              <a
-                href={TN_CLASS_1_2_3_NEW_TEXTBOOKS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-violet-500/60 bg-violet-950/70 px-4 py-2 text-violet-200 hover:border-pink-400 hover:bg-violet-900/80 hover:text-white shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all hover:scale-105"
-              >
-                <span>Class 1, 2, 3 PDF ✨</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Bottom: Choose Your Study Adventure Worlds */}
-          <div className="relative flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <GraduationCap size={22} weight="fill" className="text-cyan-400" />
-                <h3 className="font-display text-base sm:text-lg font-bold text-white tracking-tight">
-                  Choose Your Study Adventure! 🌟
-                </h3>
-              </div>
-
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/80 bg-emerald-950/80 px-3.5 py-1 font-mono text-xs font-semibold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.35)]">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>
-                  Enrolled: {seniorGroupFilter === "commerce" ? "Commerce Group" : seniorGroupFilter === "business_maths" ? "Business Maths Group" : "Computer Science Group"}
-                </span>
-              </span>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {/* World 1: Science Quest 🧪 */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSeniorGroupFilter("cs");
-                  setFilter("subjects");
-                  authService.updateStandard(currentStandard, "cs");
-                }}
-                className={`relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between min-h-[140px] ${
-                  seniorGroupFilter === "cs"
-                    ? "border-cyan-400 bg-gradient-to-br from-[#0c2e42] via-[#081c2e] to-[#06121f] shadow-[0_0_30px_-5px_rgba(34,211,238,0.55)]"
-                    : "border-cyan-900/50 bg-[#091522]/80 hover:border-cyan-500/60"
-                }`}
-              >
-                <div className="z-10">
-                  <h4 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
-                    <span>Science Quest</span>
-                    <span>🧪</span>
-                  </h4>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-cyan-100/80">
-                    Computer Science, Mathematics, Physics, Chemistry (+ Tamil & English)
-                  </p>
-                </div>
-                <div className="flex items-end justify-between mt-2 pt-1 border-t border-cyan-500/20 z-10">
-                  <DinosaurMascot className="size-10 pointer-events-none" />
-                  <ComputerMascot className="size-11 pointer-events-none" />
-                </div>
-              </button>
-
-              {/* World 2: Merchant World 🪙 */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSeniorGroupFilter("commerce");
-                  setFilter("subjects");
-                  authService.updateStandard(currentStandard, "commerce");
-                }}
-                className={`relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between min-h-[140px] ${
-                  seniorGroupFilter === "commerce"
-                    ? "border-blue-400 bg-gradient-to-br from-[#142354] via-[#0f173f] to-[#0a0d2a] shadow-[0_0_30px_-5px_rgba(96,165,250,0.55)]"
-                    : "border-blue-900/50 bg-[#0a102b]/80 hover:border-blue-500/60"
-                }`}
-              >
-                <div className="z-10">
-                  <h4 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
-                    <span>Merchant World</span>
-                    <span>🪙</span>
-                  </h4>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-blue-100/80">
-                    Commerce, Accountancy, Economics, Computer Applications (+ Tamil & English)
-                  </p>
-                </div>
-                <div className="flex items-end justify-between mt-2 pt-1 border-t border-blue-500/20 z-10">
-                  <TreasureChestMascot className="size-9 pointer-events-none" />
-                  <CalculatorMascot className="size-11 pointer-events-none" />
-                </div>
-              </button>
-
-              {/* World 3: Math Maze 📐 */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSeniorGroupFilter("business_maths");
-                  setFilter("subjects");
-                  authService.updateStandard(currentStandard, "business_maths");
-                }}
-                className={`relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between min-h-[140px] ${
-                  seniorGroupFilter === "business_maths"
-                    ? "border-purple-400 bg-gradient-to-br from-[#2f124d] via-[#1f0b37] to-[#120524] shadow-[0_0_30px_-5px_rgba(192,132,252,0.55)]"
-                    : "border-purple-900/50 bg-[#160826]/80 hover:border-purple-500/60"
-                }`}
-              >
-                <div className="z-10">
-                  <h4 className="font-display text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
-                    <span>Math Maze</span>
-                    <span>📐</span>
-                  </h4>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-purple-100/80">
-                    Commerce, Accountancy, Economics, Business Mathematics (+ Tamil & English)
-                  </p>
-                </div>
-                <div className="flex items-end justify-between mt-2 pt-1 border-t border-purple-500/20 z-10">
-                  <MathMonsterMascot className="size-10 pointer-events-none" />
-                  <RulerMascot className="size-11 pointer-events-none" />
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* [Footer Navigation: Filter Capsules Row] */}
-      <div
-        role="radiogroup"
-        aria-label="Filter subjects and chapters"
-        className="relative z-10 flex items-center gap-2.5 overflow-x-auto pb-3 [scrollbar-width:none]"
-      >
-        {/* All Subjects */}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={filter === "subjects"}
-          onClick={() => setFilter("subjects")}
-          className={`relative flex h-12 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all duration-200 ${
-            filter === "subjects"
-              ? "border-2 border-violet-400 bg-violet-600/35 text-white shadow-[0_0_20px_rgba(168,85,247,0.6)]"
-              : "border-white/10 bg-[#140828] text-purple-200/80 hover:text-white hover:border-violet-400/60"
-          }`}
-        >
-          <span>All Subjects</span>
-          <span className="font-mono text-xs opacity-75">{subjects.length}</span>
-          <span className="text-base">🎒</span>
-          {filter === "subjects" && (
-            <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-violet-400" />
-          )}
-        </button>
-
-        {/* All Chapters */}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={filter === "all"}
-          onClick={() => setFilter("all")}
-          className={`relative flex h-12 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all duration-200 ${
-            filter === "all"
-              ? "border-2 border-violet-400 bg-violet-600/35 text-white shadow-[0_0_20px_rgba(168,85,247,0.6)]"
-              : "border-white/10 bg-[#140828] text-purple-200/80 hover:text-white hover:border-violet-400/60"
-          }`}
-        >
-          <span>All Chapters</span>
-          <span className="font-mono text-xs opacity-75">{totalChapters}</span>
-          <span className="text-base">🌟</span>
-          {filter === "all" && (
-            <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-violet-400" />
-          )}
-        </button>
-
-        {/* Subject Specific Pills */}
-        {subjects.map((sub) => {
-          const active = filter === sub.id;
-          const count = sub.chapters.length;
-          const iconEmoji =
-            sub.code === "TAM" || sub.id.includes("tamil")
-              ? "🐯"
-              : sub.code === "ENG" || sub.id.includes("english")
-              ? "🦜"
-              : sub.code === "MAT" || sub.id.includes("math")
-              ? "🍎"
-              : sub.code === "PHY" || sub.id.includes("physics")
-              ? "🚀"
-              : sub.code === "CHE" || sub.id.includes("chem")
-              ? "🧪"
-              : sub.code === "CS" || sub.id.includes("computer")
-              ? "💻"
-              : "📚";
-
-          const label = (sub.code === "TAM" || sub.id.includes("tamil"))
-            ? `${sub.name[locale]} (பொதுத்தமிழ்)`
-            : sub.name[locale];
-
-          return (
-            <button
-              key={sub.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setFilter(sub.id)}
-              className={`relative flex h-12 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all duration-200 ${
-                active
-                  ? "border-2 border-cyan-400 bg-cyan-600/30 text-white shadow-[0_0_20px_rgba(34,211,238,0.6)]"
-                  : "border-white/10 bg-[#140828] text-purple-200/80 hover:text-white hover:border-violet-400/60"
-              }`}
-            >
-              <span>{label}</span>
-              <span className="font-mono text-xs opacity-75">{count}</span>
-              <span className="text-base">{iconEmoji}</span>
-              {active && (
-                <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-cyan-400" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* The Cards Grid */}
-      <div className="relative z-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filter === "subjects" &&
-          subjects.map((sub, i) => {
-            const doneCount = sub.chapters.filter((c) =>
-              progress.lessonsDone.includes(c.id),
-            ).length;
-
-            return (
-              <div key={sub.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                <SubjectCard
-                  subject={sub}
-                  standard={currentStandard}
-                  doneCount={doneCount}
-                  onOpen={() => setFilter(sub.id)}
-                />
-              </div>
-            );
-          })}
-
-        {filter === "all" &&
-          allFlatChapters.map((item, i) => {
-            const isDone = progress.lessonsDone.includes(item.chapter.id);
-            return (
-              <div key={item.chapter.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                <ChapterCard
-                  subject={item.subject}
-                  chapter={item.chapter}
-                  standard={currentStandard}
-                  done={isDone}
-                  onOpen={() => setOpenChapterId(item.chapter.id)}
-                />
-              </div>
-            );
-          })}
-
-        {filter !== "subjects" &&
-          filter !== "all" &&
-          (() => {
-            const sub = subjects.find((s) => s.id === filter);
-            if (!sub) return null;
-            return sub.chapters.map((ch, i) => {
-              const isDone = progress.lessonsDone.includes(ch.id);
-              return (
-                <div key={ch.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                  <ChapterCard
-                    subject={sub}
-                    chapter={ch}
-                    standard={currentStandard}
-                    done={isDone}
-                    onOpen={() => setOpenChapterId(ch.id)}
-                  />
-                </div>
-              );
-            });
-          })()}
-      </div>
-
-        </>
-      ) : (
-        // CLASS 4 TO 12: Clean Standard Educational Portal
-        <>
-
-      {/* 1. Top Row: Progress Ring & Speech Bubble Mascot / Standard Hint */}
-      <div className="grid gap-3 md:grid-cols-[auto_1fr] md:items-center">
-        <div className="flex items-center gap-4 rounded-3xl border border-line bg-surface px-5 py-4">
-          <ProgressRing done={completedChaptersCount} total={totalChapters} />
-          <div>
-            <p className="font-mono text-2xl">
-              {completedChaptersCount}
-              <span className="text-muted">/{totalChapters}</span>
-            </p>
-            <p className="text-[13px] text-muted">
-              {completedChaptersCount === totalChapters ? (
-                <span className="inline-flex items-center gap-1 text-success">
-                  <Sparkle size={14} weight="fill" aria-hidden />
-                  All caught up!
-                </span>
-              ) : (
-                `${totalChapters - completedChaptersCount} more to complete Class ${currentStandard}`
-              )}
-            </p>
-          </div>
-        </div>
-
-        {/* Band hint with speech bubble & standard badge */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-line bg-surface px-6 py-4">
-          <div className="flex items-center gap-3">
-            <GrowthStage band={band} className="size-10 shrink-0" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs uppercase tracking-wider text-violet">
-                  Class {currentStandard} · {BAND_INFO[band].name[locale]}
-                </span>
-                <span className="rounded-full bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-muted">
-                  Samacheer Kalvi
-                </span>
-              </div>
-              <p className="text-sm text-text">
-                Tap a subject or chapter card below, then listen and read along!
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setSwitcherOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-violet/40 bg-violet-deep/30 px-3.5 py-1.5 font-mono text-xs font-semibold text-violet-ink hover:bg-violet-deep transition-colors"
-          >
-            <PencilSimple size={13} />
-            <span>Change Standard</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Personalised Continue Learning Pointer (if available) */}
-      {continueRecord && (
-        <div className="relative overflow-hidden rounded-3xl border border-violet/30 bg-gradient-to-r from-violet-deep/20 via-surface to-surface p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-violet/20 text-violet">
-                <ChapterIcon name={resolveChapterIcon(continueRecord.subject, continueRecord.chapter)} className="size-7" />
-              </span>
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-wider text-violet">
-                  {continueRecord.isStarter ? "Start your first lesson" : "Continue Learning"}
-                </p>
-                <h3 className="font-display text-lg font-bold text-text">
-                  {continueRecord.chapter.title[locale]}
-                </h3>
-                <p className="text-xs text-muted">
-                  {continueRecord.subject.name[locale]} · Chapter {continueRecord.chapter.chapterNumber}
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setOpenChapterId(continueRecord.chapter.id)}
-              className="beam-border inline-flex h-11 items-center gap-2 rounded-full bg-violet-deep px-5 font-mono text-xs font-semibold text-violet-ink transition-transform hover:-translate-y-0.5"
-            >
-              {continueRecord.isStarter ? "Start Lesson →" : "Resume →"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Official Tamil Nadu Textbooks Reference Links */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface/70 px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-2.5">
-          <FilePdf size={18} weight="duotone" className="shrink-0 text-violet" />
-          <span className="font-mono text-xs text-muted">Official TN Textbooks:</span>
-          <span className="rounded-full bg-violet/15 px-2.5 py-0.5 font-mono text-[11px] text-violet-ink">
-            New Syllabus 2026–27
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-          <a
-            href={TN_NEW_SYLLABUS_2026_27_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-violet/40 bg-violet-deep/30 px-3.5 py-1 text-violet-ink hover:bg-violet-deep transition-colors"
-          >
-            <span>New Syllabus 2026–27 (Tnkalvi.net)</span>
-            <ArrowSquareOut size={12} />
-          </a>
-          <a
-            href={TN_TEXTBOOK_PORTAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-muted hover:border-line-strong hover:text-text transition-colors"
-          >
-            <span>TN School Textbooks Portal</span>
-            <ArrowSquareOut size={12} />
-          </a>
-          <a
-            href={TN_CLASS_1_2_3_NEW_TEXTBOOKS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-muted hover:border-line-strong hover:text-text transition-colors"
-          >
-            <span>Class 1, 2, 3 PDF</span>
-            <ArrowSquareOut size={12} />
-          </a>
-        </div>
-      </div>
-
-      {/* Higher Secondary Group Selector (Class 11 & 12) */}
-      {isSenior && (
-        <div className="rounded-3xl border border-teal/40 bg-teal/[0.04] p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="grid size-7 place-items-center rounded-lg bg-teal/20 text-teal">
-                <GraduationCap size={18} weight="fill" />
-              </span>
-              <div>
-                <h3 className="font-display text-base font-bold text-text">
-                  {locale === "ta"
-                    ? "மேல்நிலைப் பிரிவு பாடங்கள் (Class 11 & 12 Streams)"
-                    : "Higher Secondary Stream Groups"}
-                </h3>
-                <p className="text-xs text-muted">
-                  {locale === "ta"
-                    ? "தமிழ்நாடு மாநிலப் பாடத்திட்டத்தின் முக்கியப் பாடப்பிரிவுகள்"
-                    : "Tamil Nadu Samacheer Kalvi standard-wise group tracks"}
-                </p>
-              </div>
-            </div>
-
-            {profile.seniorGroup && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-teal/30 bg-teal/15 px-3 py-1 font-mono text-[11px] text-teal">
-                <span className="size-1.5 rounded-full bg-teal" />
-                <span>Enrolled: {getSeniorGroup(profile.seniorGroup)?.name[locale] ?? profile.seniorGroup}</span>
-              </span>
-            )}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {SENIOR_GROUPS.map((grp) => {
-              const active = seniorGroupFilter === grp.id;
-              return (
-                <button
-                  key={grp.id}
-                  type="button"
-                  onClick={() => {
-                    setSeniorGroupFilter(grp.id);
-                    setFilter("subjects");
-                    authService.updateStandard(currentStandard, grp.id);
-                  }}
-                  style={{ "--grp": grp.accent } as React.CSSProperties}
-                  className={`flex flex-col rounded-2xl border p-3.5 text-left transition-all ${
-                    active
-                      ? "border-[var(--grp)] bg-[color-mix(in_srgb,var(--grp)_18%,var(--surface))] shadow-[0_0_20px_-5px_var(--grp)] font-medium"
-                      : "border-line bg-surface text-muted hover:border-line-strong hover:bg-white/[0.04] hover:text-text"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10.5px] font-semibold text-[var(--grp)]">{grp.badge}</span>
-                    {active && <CheckCircle size={15} weight="fill" className="text-[var(--grp)]" />}
-                  </div>
-                  <span className="font-display text-sm font-bold text-text mt-1.5 line-clamp-1">
-                    {grp.name[locale]}
-                  </span>
-                  <span className="text-[11.5px] text-muted line-clamp-2 mt-1">
-                    {grp.description[locale]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Filter Capsules: All Subjects vs All Chapters vs Individual Subject */}
-      <div
-        role="radiogroup"
-        aria-label="Filter subjects and chapters"
-        className="flex items-center gap-2 overflow-x-auto pb-2 [scrollbar-width:none]"
-      >
-        <button
-          type="button"
-          role="radio"
-          aria-checked={filter === "subjects"}
-          onClick={() => setFilter("subjects")}
-          className={`flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 font-mono text-xs transition-colors ${
-            filter === "subjects"
-              ? "border-violet bg-violet-deep text-violet-ink"
-              : "border-line bg-surface text-muted hover:text-text"
-          }`}
-        >
-          <span>All Subjects</span>
-          <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 text-[10px]">
-            {subjects.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          role="radio"
-          aria-checked={filter === "all"}
-          onClick={() => setFilter("all")}
-          className={`flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 font-mono text-xs transition-colors ${
-            filter === "all"
-              ? "border-violet bg-violet-deep text-violet-ink"
-              : "border-line bg-surface text-muted hover:text-text"
-          }`}
-        >
-          <span>All Chapters</span>
-          <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 text-[10px]">
-            {totalChapters}
-          </span>
-        </button>
-
-        {subjects.map((sub) => {
-          const active = filter === sub.id;
-          const count = sub.chapters.length;
-          return (
-            <button
-              key={sub.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setFilter(sub.id)}
-              className={`flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 font-mono text-xs transition-colors ${
-                active
-                  ? "border-[var(--cat)] bg-[color-mix(in_srgb,var(--cat)_15%,transparent)] text-[var(--cat)]"
-                  : "border-line bg-surface text-muted hover:text-text"
-              }`}
-              style={{ "--cat": sub.accent } as React.CSSProperties}
-            >
-              <span>{sub.name[locale]}</span>
-              <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 text-[10px]">
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* The Cards Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filter === "subjects" &&
-          subjects.map((sub, i) => {
-            const doneCount = sub.chapters.filter((c) =>
-              progress.lessonsDone.includes(c.id),
-            ).length;
-
-            return (
-              <div key={sub.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                <SubjectCard
-                  subject={sub}
-                  standard={currentStandard}
-                  doneCount={doneCount}
-                  onOpen={() => setFilter(sub.id)}
-                />
-              </div>
-            );
-          })}
-
-        {filter === "all" &&
-          allFlatChapters.map((item, i) => {
-            const isDone = progress.lessonsDone.includes(item.chapter.id);
-            return (
-              <div key={item.chapter.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                <ChapterCard
-                  subject={item.subject}
-                  chapter={item.chapter}
-                  standard={currentStandard}
-                  done={isDone}
-                  onOpen={() => setOpenChapterId(item.chapter.id)}
-                />
-              </div>
-            );
-          })}
-
-        {filter !== "subjects" &&
-          filter !== "all" &&
-          (() => {
-            const sub = subjects.find((s) => s.id === filter);
-            if (!sub) return null;
-            return sub.chapters.map((ch, i) => {
-              const isDone = progress.lessonsDone.includes(ch.id);
-              return (
-                <div key={ch.id} className="fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-                  <ChapterCard
-                    subject={sub}
-                    chapter={ch}
-                    standard={currentStandard}
-                    done={isDone}
-                    onOpen={() => setOpenChapterId(ch.id)}
-                  />
-                </div>
-              );
-            });
-          })()}
-      </div>
-
-        </>
-      )}
+      {/* Module 1: Digital Learning Template (Class 1 to 12) */}
+      <SeniorDigitalLearning
+        currentStandard={currentStandard}
+        subjects={subjects}
+        allFlatChapters={allFlatChapters}
+        filter={filter}
+        setFilter={setFilter}
+        onOpenChapter={(chapterId) => setOpenChapterId(chapterId)}
+        onOpenStandardSwitcher={() => setSwitcherOpen(true)}
+        onSelectStandard={handleStandardChange}
+        continueRecord={continueRecord}
+        totalChapters={totalChapters}
+        completedChaptersCount={completedChaptersCount}
+        seniorGroupFilter={seniorGroupFilter}
+        profile={profile}
+        onSelectSeniorGroup={(grp) => {
+          if (getSeniorGroup(grp)) {
+            setSeniorGroupFilter(grp as SeniorGroupId);
+            authService.updateStandard(currentStandard, grp);
+          }
+        }}
+      />
 
       {/* Interactive Lesson Dialog (Reader & Quiz) */}
       <CurriculumLessonDialog
-        standard={currentStandard}
+        standard={activeChapterItem?.standard ?? currentStandard}
         subject={activeChapterItem?.subject ?? null}
         chapter={activeChapterItem?.chapter ?? null}
-        allChapters={allFlatChapters}
+        allChapters={
+          activeChapterItem && activeChapterItem.standard !== currentStandard
+            ? getSubjectsForStandard(activeChapterItem.standard).flatMap((s) => s.chapters.map((ch) => ({ subject: s, chapter: ch })))
+            : allFlatChapters
+        }
         onClose={() => setOpenChapterId(null)}
         onSelectChapter={(chId) => setOpenChapterId(chId)}
       />
@@ -2535,33 +1924,16 @@ function PersonalisedLearnDashboard({
 // ----------------------------------------------------------------------------
 export function LearnScreen({ band }: { band: Band }) {
   const { profile } = useProgress();
-  const hydrated = useHydrated();
-
-  // If not signed in or hydrated:
-  if (!hydrated) {
-    return <div aria-hidden className="h-96 animate-pulse rounded-3xl border border-line bg-surface/60" />;
-  }
 
   if (!profile) {
     return (
-      <div className="rounded-[28px] border border-line bg-surface/80 p-6 text-center sm:p-12">
-        <h2 className="font-display text-3xl font-bold">Please complete your student profile</h2>
-        <p className="mt-2 text-sm text-muted">
-          Select your school standard (Class 1 to Class 12) to access your personalised curriculum.
-        </p>
-        <div className="mt-6">
-          <Link
-            href="/sign-in?redirect=/m/learn"
-            className="beam-border inline-flex h-12 items-center gap-2 rounded-full bg-violet-deep px-6 font-mono text-xs text-violet-ink"
-          >
-            Create Profile & Choose Standard →
-          </Link>
-        </div>
+      <div className="w-full rounded-[32px] border border-white/20 dark:border-purple-400/30 bg-white/[0.04] dark:bg-purple-950/20 backdrop-blur-2xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-[0_30px_90px_-20px_rgba(0,0,0,0.85),inset_0_1px_2px_0_rgba(255,255,255,0.25)]">
+        <LearnerSetup redirectTo="/m/learn" />
       </div>
     );
   }
 
-  return <PersonalisedLearnDashboard band={band} profile={profile} />;
+  return <PersonalisedLearnDashboard band={band ?? "middle"} profile={profile} />;
 }
 
 export default LearnScreen;

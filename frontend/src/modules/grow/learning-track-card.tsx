@@ -30,7 +30,7 @@ export function LearningTrackCard({
   const c = GROW_COPY[locale];
 
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-line bg-surface p-5 sm:p-7">
+    <div className="relative overflow-hidden rounded-3xl border border-purple-200/70 dark:border-white/10 bg-[#faf7ff] dark:bg-[#0d0720] shadow-[0_12px_36px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] p-5 sm:p-7">
       {/* Background ambient radial glow */}
       <div
         aria-hidden
@@ -44,7 +44,7 @@ export function LearningTrackCard({
             <span className="grid size-8 place-items-center rounded-xl bg-violet/20 text-violet">
               <GraduationCap size={20} weight="fill" />
             </span>
-            <h2 className="font-display text-xl sm:text-2xl tracking-[-0.02em]">
+            <h2 className="font-display text-base sm:text-lg lg:text-xl font-bold tracking-wide text-slate-900 dark:text-white">
               {c.learningTrackTitle}
             </h2>
           </div>
@@ -277,6 +277,6 @@ export function LearningTrackCard({
           {c.academicsContributionHint}
         </p>
       </div>
-    </section>
+    </div>
   );
 }

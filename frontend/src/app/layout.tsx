@@ -3,6 +3,7 @@ import { Anek_Devanagari, Anek_Tamil, DM_Serif_Display, Fraunces, Geist, IBM_Ple
 import { LocaleProvider } from "@/components/locale-provider";
 import { FeedbackLayer } from "@/components/feedback-layer";
 import { ComfortBoot } from "@/components/comfort-boot";
+import { ThemeBoot } from "@/components/theme-toggle";
 import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
@@ -31,20 +32,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-theme="dark"
       suppressHydrationWarning
-      className={`${geist.variable} ${plexMono.variable} ${fraunces.variable} ${titleSerif.variable} ${anekTamil.variable} ${anekDeva.variable}`}
+      className={`dark ${geist.variable} ${plexMono.variable} ${fraunces.variable} ${titleSerif.variable} ${anekTamil.variable} ${anekDeva.variable}`}
     >
       <body className="min-h-svh">
-        {/* Apply calm / projector before the first paint so motion never flashes. */}
+        {/* Apply calm / projector / theme before the first paint so motion and colors never flash. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var c=JSON.parse(localStorage.getItem('kalpavriksha.comfort')||'{}');var e=document.documentElement;if(c.calm===true)e.dataset.calm='true';if(c.projector===true)e.dataset.projector='true';}catch(e){}",
+              "try{var c=JSON.parse(localStorage.getItem('kalpavriksha.comfort')||'{}');var th=localStorage.getItem('kalpavriksha.theme')||'dark';var e=document.documentElement;if(c.calm===true)e.dataset.calm='true';if(c.projector===true)e.dataset.projector='true';e.dataset.theme=th;if(th==='light'){e.classList.remove('dark');e.classList.add('light');}else{e.classList.remove('light');e.classList.add('dark');}}catch(e){}",
           }}
         />
         <LocaleProvider>{children}</LocaleProvider>
         <FeedbackLayer />
         <ComfortBoot />
+        <ThemeBoot />
       </body>
     </html>
   );

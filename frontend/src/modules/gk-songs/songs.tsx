@@ -6,6 +6,7 @@ import { Burst } from "@/components/burst";
 import { useLocale } from "@/components/locale-provider";
 import { updateProgress, useProgress } from "@/components/progress-store";
 import { KaraokeLines, useReadAloud } from "@/components/read-aloud";
+import { LiquidGlassSurface } from "@/components/liquid-glass-surface";
 import { XP, completeSong, localDay, type Band } from "@/lib/progress";
 import { GK_COPY, SONGS } from "./content";
 
@@ -57,7 +58,7 @@ export function Songs({ band }: { band: Band }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
-      <div role="radiogroup" aria-label={c.tabs.songs} className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+      <div role="radiogroup" aria-label={c.tabs.songs} className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible scrollbar-thin scrollbar-amber">
         {SONGS.map((s) => {
           const active = s.id === song.id;
           return (
@@ -87,12 +88,16 @@ export function Songs({ band }: { band: Band }) {
         })}
       </div>
 
-      <div key={song.id} className="fade-up overflow-hidden rounded-[28px] border border-line bg-surface">
+      <LiquidGlassSurface
+        key={song.id}
+        radius={28}
+        className="fade-up border border-purple-200/70 dark:border-white/10 bg-white/75 dark:bg-[#0d0720]/80 shadow-[0_12px_36px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)]"
+      >
         <div className="flex flex-col items-center gap-6 bg-[radial-gradient(60%_80%_at_20%_0%,rgb(124_58_237/0.22),transparent_70%)] p-6 sm:flex-row sm:p-8">
           <Record spinning={playing} />
           <div className="text-center sm:text-left">
             <p className="font-mono text-[12px] text-[var(--band)]">{song.kind[locale]}</p>
-            <h2 className="mt-1 font-display text-[clamp(28px,4vw,44px)] leading-tight tracking-[-0.03em]">{song.title[locale]}</h2>
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl lg:text-4xl font-black tracking-wide text-slate-900 dark:text-white">{song.title[locale]}</h2>
             <p className="mt-1 text-[14px] text-muted">{song.credit[locale]}</p>
             <div className="relative mt-5 inline-flex">
               <button
@@ -151,7 +156,7 @@ export function Songs({ band }: { band: Band }) {
             <p className="mt-2 text-[14px] leading-relaxed">{song.fact[locale]}</p>
           </div>
         </div>
-      </div>
+      </LiquidGlassSurface>
     </div>
   );
 }
