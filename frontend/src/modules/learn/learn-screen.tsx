@@ -1753,7 +1753,50 @@ function PersonalisedLearnDashboard({
   const [filter, setFilter] = useState<string>("subjects"); // "subjects" | "all" | subject.id
   const searchParams = useSearchParams();
   // Chapter classroom dialog is strictly closed by default, opening only when a chapter is touched/clicked
-  const [openChapterId, setOpenChapterId] = useState<string | null>(null);
+  // The open lesson lives in the URL (?chapter=…), so each lesson is its own page:
+  // the browser's back button returns to the chapter list and the link can be shared.
+  // (This screen only renders on the client, after the learner card has loaded.)
+  const [openChapterId, setOpenChapterId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("chapter"),
+  );
+  const pushedLessonRef = useRef(false);
+
+  useEffect(() => {
+    const onPop = () => {
+      pushedLessonRef.current = false;
+      setOpenChapterId(new URLSearchParams(window.location.search).get("chapter"));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const lessonUrl = (chapterId: string | null) => {
+    const url = new URL(window.location.href);
+    if (chapterId) url.searchParams.set("chapter", chapterId);
+    else url.searchParams.delete("chapter");
+    return url;
+  };
+
+  /** Go to a lesson page; moving between lessons replaces the entry so Back returns to the list. */
+  const openChapter = (chapterId: string) => {
+    if (openChapterId) {
+      window.history.replaceState(window.history.state, "", lessonUrl(chapterId));
+    } else {
+      window.history.pushState(window.history.state, "", lessonUrl(chapterId));
+      pushedLessonRef.current = true;
+    }
+    setOpenChapterId(chapterId);
+  };
+
+  /** Leave the lesson page: step back in history if we came from the list, else just drop the param. */
+  const closeChapter = () => {
+    if (pushedLessonRef.current) {
+      window.history.back();
+      return;
+    }
+    window.history.replaceState(window.history.state, "", lessonUrl(null));
+    setOpenChapterId(null);
+  };
 
   useEffect(() => {
     const ch = searchParams?.get("chapter");
@@ -1886,7 +1929,7 @@ function PersonalisedLearnDashboard({
         allFlatChapters={allFlatChapters}
         filter={filter}
         setFilter={setFilter}
-        onOpenChapter={(chapterId) => setOpenChapterId(chapterId)}
+        onOpenChapter={openChapter}
         onOpenStandardSwitcher={() => setSwitcherOpen(true)}
         onSelectStandard={handleStandardChange}
         continueRecord={continueRecord}
@@ -1912,8 +1955,8 @@ function PersonalisedLearnDashboard({
             ? getSubjectsForStandard(activeChapterItem.standard).flatMap((s) => s.chapters.map((ch) => ({ subject: s, chapter: ch })))
             : allFlatChapters
         }
-        onClose={() => setOpenChapterId(null)}
-        onSelectChapter={(chId) => setOpenChapterId(chId)}
+        onClose={closeChapter}
+        onSelectChapter={openChapter}
       />
     </div>
   );
