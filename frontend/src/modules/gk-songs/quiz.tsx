@@ -50,7 +50,7 @@ function starsFor(correct: number, total: number): 0 | 1 | 2 | 3 {
   return pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
 }
 
-function LevelIcon({ name, className = "size-5" }: { name: string; className?: string }) {
+export function LevelIcon({ name, className = "size-5" }: { name: string; className?: string }) {
   switch (name) {
     case "plant":
       return <Plant className={className} weight="duotone" />;
@@ -66,9 +66,15 @@ function LevelIcon({ name, className = "size-5" }: { name: string; className?: s
 export function Quiz({
   band,
   initialLevel,
+  autoStart = false,
+  onChangeLevel,
 }: {
   band: Band;
   initialLevel?: GkLevel;
+  /** Skip the level bar and intro: open straight on question 1 (the level was picked beforehand). */
+  autoStart?: boolean;
+  /** Where "change level" goes when the level picker lives outside the quiz. */
+  onChangeLevel?: () => void;
 }) {
   const { locale } = useLocale();
   const c = GK_COPY[locale];
@@ -81,8 +87,8 @@ export function Quiz({
   const seconds = QUESTION_SECONDS[level];
   const levelInfo = GK_LEVEL_CONFIG[level];
 
-  const [phase, setPhase] = useState<"intro" | "play" | "result">("intro");
-  const [order, setOrder] = useState<number[]>([]);
+  const [phase, setPhase] = useState<"intro" | "play" | "result">(autoStart ? "play" : "intro");
+  const [order, setOrder] = useState<number[]>(() => (autoStart ? shuffled(questions.length) : []));
   const [step, setStep] = useState(0);
   const [pick, setPick] = useState<Pick>(null);
   const [picks, setPicks] = useState<Pick[]>([]);
@@ -94,7 +100,9 @@ export function Quiz({
   const handleSelectLevel = (newLevel: GkLevel) => {
     if (newLevel === level && phase === "intro") return;
     setLevel(newLevel);
-    setPhase("intro");
+    // With an outside level picker there is no intro: go straight into the new level's questions.
+    setOrder(autoStart ? shuffled(QUIZ[newLevel].length) : []);
+    setPhase(autoStart ? "play" : "intro");
     setStep(0);
     setPick(null);
     setPicks([]);
@@ -131,6 +139,8 @@ export function Quiz({
     setPhase("result");
   };
 
+  const goToLevels = () => (onChangeLevel ? onChangeLevel() : setPhase("intro"));
+
   // Next level helper
   const nextLevel = level === "primary" ? "intermediate" : level === "intermediate" ? "advanced" : null;
 
@@ -159,7 +169,8 @@ export function Quiz({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* 3-LEVEL SWITCHER BAR */}
+      {/* 3-LEVEL SWITCHER BAR (hidden when the level was picked beforehand) */}
+      {!autoStart && (
       <div className="rounded-3xl border border-line bg-surface p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5">
           <div>
@@ -173,7 +184,7 @@ export function Quiz({
           {phase === "play" && (
             <button
               type="button"
-              onClick={() => setPhase("intro")}
+              onClick={goToLevels}
               className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 py-1 text-xs text-muted hover:border-line-strong hover:text-text transition-colors"
             >
               <ArrowUUpLeft size={14} />
@@ -234,6 +245,7 @@ export function Quiz({
           })}
         </div>
       </div>
+      )}
 
       {/* PHASE 1: INTRO SCREEN */}
       {phase === "intro" && (
@@ -329,7 +341,7 @@ export function Quiz({
               )}
               <button
                 type="button"
-                onClick={() => setPhase("intro")}
+                onClick={goToLevels}
                 className="text-xs text-muted hover:text-text font-mono transition-colors"
               >
                 {c.switchLevel}
@@ -513,7 +525,7 @@ export function Quiz({
 
                   <button
                     type="button"
-                    onClick={() => setPhase("intro")}
+                    onClick={goToLevels}
                     className="inline-flex h-12 items-center gap-2 rounded-full border border-line px-5 text-sm text-muted hover:text-text transition-colors"
                   >
                     <span>{c.switchLevel}</span>
