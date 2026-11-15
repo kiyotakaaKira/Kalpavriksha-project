@@ -224,21 +224,6 @@ interface SeniorDigitalLearningProps {
   profile?: Profile;
 }
 
-const CLASS_ITEMS = [
-  { std: 1, label: "Class 1", image: "/images/learn/class-1-art.png" },
-  { std: 2, label: "Class 2", image: "/images/learn/class-2-art.png" },
-  { std: 3, label: "Class 3", image: "/images/learn/class-3-art.png" },
-  { std: 4, label: "Class 4", image: "/images/learn/class-4-art.png" },
-  { std: 5, label: "Class 5", image: "/images/learn/class-5-art.png" },
-  { std: 6, label: "Class 6", image: "/images/learn/class-6-art.png" },
-  { std: 7, label: "Class 7", image: "/images/learn/class-7-shapes.png" },
-  { std: 8, label: "Class 8", image: "/images/learn/class-8-armillary.png" },
-  { std: 9, label: "Class 9", image: "/images/learn/class-9-books.png" },
-  { std: 10, label: "Class 10", image: "/images/learn/class-10-compass.png" },
-  { std: 11, label: "Class 11", image: "/images/learn/class-11-molecule.png" },
-  { std: 12, label: "Class 12", image: "/images/learn/class-12-trophy.png" },
-];
-
 const SUBJECT_PALETTES = {
   pink: {
     borderClass: "border-pink-200/80 hover:border-pink-400 dark:border-pink-900/35 dark:hover:border-pink-600/50",
@@ -634,19 +619,6 @@ export function SeniorDigitalLearning({
       {/* ========================================================================= */}
       <section className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3.5 sm:gap-4">
-          <div className="relative size-12 shrink-0 sm:size-14">
-            <Image
-              src={
-                CLASS_ITEMS.find((c) => c.std === currentStandard)?.image ||
-                "/images/learn/class-8-armillary.png"
-              }
-              alt={`Class ${currentStandard}`}
-              width={56}
-              height={56}
-              className="size-full object-contain drop-shadow-md"
-            />
-          </div>
-
           <div className="min-w-0">
             <h1 className="module-hero-title font-serif text-[26px] font-black tracking-wide text-slate-900 uppercase dark:text-white sm:text-[32px]">
               Digital Learning
@@ -766,15 +738,6 @@ export function SeniorDigitalLearning({
               </div>
 
               <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end">
-                <div className="relative hidden size-20 sm:block">
-                  <Image
-                    src="/images/learn/continue-sprout.png"
-                    alt="Sprout in soil pot"
-                    width={72}
-                    height={72}
-                    className="size-full object-contain drop-shadow-md"
-                  />
-                </div>
                 <button
                   type="button"
                   onClick={handleLaunchContinue}
